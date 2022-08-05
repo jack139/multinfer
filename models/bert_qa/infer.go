@@ -119,8 +119,8 @@ func modleInfer(corpus, question string) (string, int, error){
 
 func warmup(){
 	r, _, err := modleInfer(
-		"金字塔（英语：pyramid），在建筑学上是指锥体建筑物，著名的有埃及金字塔。",
-		"金字塔是什么？",
+		"深度学习（英语：deep learning）是机器学习的分支，是一种以人工神经网络为架构，对资料进行表征学习的算法。",
+		"什么是深度学习？",
 	)
 	if err==nil {
 		log.Printf("warmup: %s", r)

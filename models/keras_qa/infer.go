@@ -55,32 +55,40 @@ func modleInfer(corpus, question string) (string, int, error){
 	// 获取 token 向量
 	f := ff.Feature(input_tokens)
 
-	tids, err := tf.NewTensor([][]int32{f.TokenIDs})
+	new_tids := make([]float32, len(f.TokenIDs))
+	for i, v := range f.TokenIDs {
+		new_tids[i] = float32(v)
+	}
+	tids, err := tf.NewTensor([][]float32{new_tids})
 	if err != nil {
 		return "", 9002, err
 	}
-	new_mask := make([]float32, len(f.Mask))
-	for i, v := range f.Mask {
-		new_mask[i] = float32(v)
+	//new_mask := make([]float32, len(f.Mask))
+	//for i, v := range f.Mask {
+	//	new_mask[i] = float32(v)
+	//}
+	//mask, err := tf.NewTensor([][]float32{new_mask})
+	//if err != nil {
+	//	return "", 9003, err
+	//}
+	new_sids := make([]float32, len(f.TypeIDs))
+	for i, v := range f.TypeIDs {
+		new_sids[i] = float32(v)
 	}
-	mask, err := tf.NewTensor([][]float32{new_mask})
-	if err != nil {
-		return "", 9003, err
-	}
-	sids, err := tf.NewTensor([][]int32{f.TypeIDs})
+	sids, err := tf.NewTensor([][]float32{new_sids})
 	if err != nil {
 		return "", 9004, err
 	}
 
 	res, err := m.Session.Run(
 		map[tf.Output]*tf.Tensor{
-			m.Graph.Operation("input_ids").Output(0):      tids,
-			m.Graph.Operation("input_mask").Output(0):     mask,
-			m.Graph.Operation("segment_ids").Output(0):    sids,
+			m.Graph.Operation("Input-Token").Output(0):      tids,
+			//m.Graph.Operation("input_mask").Output(0):     mask,
+			m.Graph.Operation("Input-Segment").Output(0):    sids,
 		},
 		[]tf.Output{
-			m.Graph.Operation("finetune_mrc/Squeeze").Output(0),
-			m.Graph.Operation("finetune_mrc/Squeeze_1").Output(0),
+			m.Graph.Operation("permute/transpose").Output(0),
+			//m.Graph.Operation("finetune_mrc/Squeeze_1").Output(0),
 		},
 		nil,
 	)
@@ -88,8 +96,8 @@ func modleInfer(corpus, question string) (string, int, error){
 		return "", 9005, err
 	}
 
-	st := slice.ArgMax(res[0].Value().([][]float32)[0])
-	ed := slice.ArgMax(res[1].Value().([][]float32)[0])
+	st := slice.ArgMax(res[0].Value().([][][]float32)[0][0])
+	ed := slice.ArgMax(res[0].Value().([][][]float32)[0][1])
 	//fmt.Println(st, ed)
 	if ed<st{ // ed 小于 st 说明未找到答案
 		st = 0
@@ -119,8 +127,8 @@ func modleInfer(corpus, question string) (string, int, error){
 
 func warmup(){
 	r, _, err := modleInfer(
-		"金字塔（英语：pyramid），在建筑学上是指锥体建筑物，著名的有埃及金字塔。",
-		"金字塔是什么？",
+		"深度学习（英语：deep learning）是机器学习的分支，是一种以人工神经网络为架构，对资料进行表征学习的算法。",
+		"什么是深度学习？",
 	)
 	if err==nil {
 		log.Printf("warmup: %s", r)

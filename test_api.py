@@ -43,6 +43,8 @@ def request(hostname, body, cate):
 
     if cate=="qa":
         url = host+'/api/bert_qa'
+    elif cate=="qa2":
+        url = host+'/api/albert_qa'
     else:
         url = host+'/antigen/check'
 
