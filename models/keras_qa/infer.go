@@ -63,14 +63,6 @@ func modleInfer(corpus, question string) (string, int, error){
 	if err != nil {
 		return "", 9002, err
 	}
-	//new_mask := make([]float32, len(f.Mask))
-	//for i, v := range f.Mask {
-	//	new_mask[i] = float32(v)
-	//}
-	//mask, err := tf.NewTensor([][]float32{new_mask})
-	//if err != nil {
-	//	return "", 9003, err
-	//}
 	new_sids := make([]float32, len(f.TypeIDs))
 	for i, v := range f.TypeIDs {
 		new_sids[i] = float32(v)
@@ -83,12 +75,10 @@ func modleInfer(corpus, question string) (string, int, error){
 	res, err := m.Session.Run(
 		map[tf.Output]*tf.Tensor{
 			m.Graph.Operation("Input-Token").Output(0):      tids,
-			//m.Graph.Operation("input_mask").Output(0):     mask,
 			m.Graph.Operation("Input-Segment").Output(0):    sids,
 		},
 		[]tf.Output{
 			m.Graph.Operation("permute/transpose").Output(0),
-			//m.Graph.Operation("finetune_mrc/Squeeze_1").Output(0),
 		},
 		nil,
 	)
@@ -98,7 +88,7 @@ func modleInfer(corpus, question string) (string, int, error){
 
 	st := slice.ArgMax(res[0].Value().([][][]float32)[0][0])
 	ed := slice.ArgMax(res[0].Value().([][][]float32)[0][1])
-	//fmt.Println(st, ed)
+
 	if ed<st{ // ed 小于 st 说明未找到答案
 		st = 0
 		ed = 0
