@@ -1,4 +1,4 @@
-package qa
+package keras_qa
 
 import (
 	"fmt"
@@ -8,17 +8,17 @@ import (
 
 
 /*  定义模型相关参数和方法  */
-type BertQA struct{}
+type AlbertQA struct{}
 
-func (x *BertQA) Init() error {
+func (x *AlbertQA) Init() error {
 	return initModel()
 }
 
-func (x *BertQA) ApiPath() string {
-	return "/api/bert_qa"
+func (x *AlbertQA) ApiPath() string {
+	return "/api/albert_qa"
 }
 
-func (x *BertQA) ApiEntry(reqData *map[string]interface{}) (*map[string]interface{}, error) {
+func (x *AlbertQA) ApiEntry(reqData *map[string]interface{}) (*map[string]interface{}, error) {
 	log.Println("Api_BertQA")
 
 	// 检查参数
@@ -43,7 +43,7 @@ func (x *BertQA) ApiEntry(reqData *map[string]interface{}) (*map[string]interfac
 
 
 // Bert 推理
-func (x *BertQA) Infer(reqId string, reqData *map[string]interface{}) (*map[string]interface{}, error) {
+func (x *AlbertQA) Infer(reqId string, reqData *map[string]interface{}) (*map[string]interface{}, error) {
 	log.Println("Infer_BertQA")
 
 	corpus := (*reqData)["corpus"].(string)

@@ -8,8 +8,10 @@ import (
 	"github.com/jack139/go-infer/cli"
 	"github.com/jack139/go-infer/types"
 
-	"multinfer/models/qa"
-	"multinfer/models/detpos"
+	//"multinfer/models/detpos"
+	//"multinfer/models/bert_qa"
+	"multinfer/models/keras_qa"
+	
 )
 
 
@@ -22,8 +24,9 @@ var (
 
 func init() {
 	// 添加模型实例
-	types.ModelList = append(types.ModelList, &qa.BertQA{})
-	types.ModelList = append(types.ModelList, &detpos.DetPos{})
+	//types.ModelList = append(types.ModelList, &detpos.DetPos{})
+	//types.ModelList = append(types.ModelList, &bert_qa.BertQA{})
+	types.ModelList = append(types.ModelList, &keras_qa.AlbertQA{})
 
 	// 命令行设置
 	rootCmd.CompletionOptions.DisableDefaultCmd = true

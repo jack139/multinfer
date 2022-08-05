@@ -1,4 +1,4 @@
-package qa
+package bert_qa
 
 import (
 	"log"

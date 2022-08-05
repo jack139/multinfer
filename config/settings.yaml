@@ -41,6 +41,8 @@ ErrCode:
 Customer: { # 以下 key-value 为用户自定义使用
     "BertModelPath" : "export/outputs/bert_qa/saved-model",
     "BertVocabPath" : "../../nlp/nlp_model/chinese_bert_L-12_H-768_A-12/vocab.txt",
+    "ALBertModelPath" : "export/outputs/keras_qa/saved-model",
+    "ALBertVocabPath" : "../../nlp/nlp_model/albert_zh_base/vocab_chinese.txt",
     "LocateModelPath" : "export/outputs/antigen/saved-model_locate_onebox_resnet-fpn_b128_e24_0.94362", # 预训练模型路径 
     "DetposModelPath" : "export/outputs/antigen/saved-model_detpos_5labels_vgg16_b512_e10_1.0000", # 预训练模型路径 
     "MAX_IMAGE_SIZE" : "3145728", # 图片文件最大 3MB
