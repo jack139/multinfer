@@ -96,7 +96,7 @@ func (x *BertQA) Infer(reqId string, reqData *map[string]interface{}) (*map[stri
 
 	tids, err := tf.NewTensor([][]int32{f.TokenIDs})
 	if err != nil {
-		return nil, err
+		return &map[string]interface{}{"code":9002}, err
 	}
 	new_mask := make([]float32, len(f.Mask))
 	for i, v := range f.Mask {
@@ -104,11 +104,11 @@ func (x *BertQA) Infer(reqId string, reqData *map[string]interface{}) (*map[stri
 	}
 	mask, err := tf.NewTensor([][]float32{new_mask})
 	if err != nil {
-		return nil, err
+		return &map[string]interface{}{"code":9003}, err
 	}
 	sids, err := tf.NewTensor([][]int32{f.TypeIDs})
 	if err != nil {
-		return nil, err
+		return &map[string]interface{}{"code":9004}, err
 	}
 
 	res, err := m.Session.Run(
@@ -124,7 +124,7 @@ func (x *BertQA) Infer(reqId string, reqData *map[string]interface{}) (*map[stri
 		nil,
 	)
 	if err != nil {
-		return nil, err
+		return &map[string]interface{}{"code":9005}, err
 	}
 
 	st := slice.ArgMax(res[0].Value().([][]float32)[0])

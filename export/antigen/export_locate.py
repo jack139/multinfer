@@ -13,11 +13,11 @@ os.environ["CUDA_VISIBLE_DEVICES"] = '0'
 # ------- locate model
 input_size = (256,256,3)
 model = get_model_fpn(input_size=input_size, weights=None) # fpn
-model.load_weights("../../antigen/ckpt/locate_onebox_resnet-fpn_b128_e24_0.94362.h5")
+model.load_weights("../../../antigen/ckpt/locate_onebox_resnet-fpn_b128_e24_0.94362.h5")
 model.summary()
 
 
-save_model_path = "outputs/saved-model_locate_onebox_resnet-fpn_b128_e24_0.94362"
+save_model_path = "../outputs/saved-model_locate_onebox_resnet-fpn_b128_e24_0.94362"
 if os.path.exists(save_model_path):
     shutil.rmtree(save_model_path) 
 os.makedirs(save_model_path)
