@@ -45,6 +45,8 @@ def request(hostname, body, cate):
         url = host+'/api/bert_qa'
     elif cate=="qa2":
         url = host+'/api/albert_qa'
+    elif cate=="ner":
+        url = host+'/ner/ner'
     else:
         url = host+'/antigen/check'
 
@@ -76,9 +78,9 @@ if __name__ == '__main__':
         'encType'  : 'plain',
         'data'     : {
             #'image'    : base64.b64encode(img_data).decode('utf-8'),
-            'corpus'   : "金字塔（英语：pyramid），在建筑学上是指锥体建筑物，著名的有埃及金字塔，还有玛雅卡斯蒂略金字塔、阿兹特克金字塔（太阳金字塔、月亮金字塔）等。",
-            'question' : "金字塔是什么？",
-            'text'     : "测试测试",
+            #'corpus'   : "金字塔（英语：pyramid），在建筑学上是指锥体建筑物，著名的有埃及金字塔，还有玛雅卡斯蒂略金字塔、阿兹特克金字塔（太阳金字塔、月亮金字塔）等。",
+            #'question' : "金字塔是什么？",
+            'text'     : "于当地行胃镜检查并行病理检查示:叒胃体中下部溃疡,叒病理示中分化腺癌,叒无腹胀、泛酸、嗳气、恶心、呕吐、叒无头晕",
         }
     }
 

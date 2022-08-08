@@ -13,7 +13,7 @@ import (
 	"multinfer/models/detpos"
 	"multinfer/models/bert_qa"
 	"multinfer/models/keras_qa"
-	
+	"multinfer/models/ner_pack"
 )
 
 
@@ -50,6 +50,9 @@ func preRun(cmd *cobra.Command, args []string) error {
 	}
 	if helper.Settings.Customer["Load_Antigen"] == "1" {
 		types.ModelList = append(types.ModelList, &detpos.DetPos{})
+	}
+	if helper.Settings.Customer["Load_NER_pack"] == "1" {
+		types.ModelList = append(types.ModelList, &ner_pack.NER{})
 	}
 
 	return nil
