@@ -27,6 +27,9 @@ var (
 	voc vocab.Dict
 
 	labelName = []string{"检验和检查", "治疗和手术", "疾病和诊断", "症状和体征", "药物", "解剖部位"}
+
+	/* 用于分割文本 */
+	seperators = []string{"；", "，", "。", ",", "、", ";", "）", ")"}
 )
 
 /* 初始化模型 */
@@ -42,9 +45,19 @@ func initModel() error {
 	}
 
 	// 模型热身
-	//warmup()
+	warmup()
 
 	return nil
+}
+
+// 找字符串
+func strInStrings(a string, s []string) bool {
+	for _, b := range s {
+		if b == a {
+			return true
+		}
+	}
+	return false
 }
 
 /* 判断是否是英文字符 */
@@ -61,10 +74,36 @@ func modleInfer(text string, posOffset int) ([]nerStruct, int, error){
 	// 获取 token 向量,  "[CLS]" + text + "[SEP]"
 	f := ff.Feature(input_tokens)
 
-	log.Println(input_tokens, len([]rune(input_tokens)))
-	log.Println(f.TokenIDs, len(f.TokenIDs))
-	log.Println(f.Tokens, len(f.Tokens))
-	log.Println(f.Count())
+	//log.Println(input_tokens, len([]rune(input_tokens)))
+	//log.Println(f.TokenIDs, len(f.TokenIDs))
+	//log.Println(f.Tokens, len(f.Tokens))
+	//log.Println(f.Count())
+
+	// 还原token与原始文本的对照关系
+	orig_pos := 0
+	orig_text := []rune(input_tokens)
+	orig_token := make([]nerStruct, f.Count())
+	for i, v := range f.Tokens[:f.Count()] {
+		if v=="[UNK]" { // 位置token, 没有在vocab里的字
+			orig_token[i] = nerStruct{orig_pos, "", string(orig_text[orig_pos])}
+			orig_pos++
+			continue
+		}
+		if strings.HasPrefix(v, "[") && strings.HasSuffix(v, "]") { 
+			// 其他bert标签 [CLS] [SEP] [PAD] [unused] 等
+			continue 
+		} 
+		if strings.HasPrefix(v, "##") { // 英文
+			orig_token[i] = nerStruct{orig_pos, "", string(orig_text[orig_pos:orig_pos+len(v)-2])}
+			orig_pos = orig_pos + len(v) - 2
+		} else {
+			orig_token[i] = nerStruct{orig_pos, "", string(orig_text[orig_pos:orig_pos+len([]rune(v))])}
+			orig_pos = orig_pos + len([]rune(v))
+		}
+	}
+
+	//log.Println(orig_token, len(orig_token))
+
 
 	new_tids := make([]float32, f.Count())
 	for i, v := range f.TokenIDs[:f.Count()] {
@@ -98,7 +137,7 @@ func modleInfer(text string, posOffset int) ([]nerStruct, int, error){
 	}
 
 	//log.Printf("%v", res[0].Value().([][][][]float32))
-	//log.Println("Shape", res[0].Shape())
+	log.Println("Result shape: ", res[0].Shape())
 
 	scores := res[0].Value().([][][][]float32)[0]
 
@@ -108,21 +147,15 @@ func modleInfer(text string, posOffset int) ([]nerStruct, int, error){
 		for start:=0;start<f.Count();start++ {
 			for end:=0;end<f.Count();end++ {
 				if scores[l][start][end] > 0 {
-					log.Println(l, start, end, f.Tokens[start], f.Tokens[end])
+					//log.Println(l, start, end, f.Tokens[start], f.Tokens[end])
 
 					// 处理token中的英文，例如： 'di', '##st', '##ri', '##bu', '##ted', 're', '##pr', '##ese', '##nt', '##ation',
 					var ans string
 					for i:=start;i<end+1;i++ {
-						if len(f.Tokens[i])>0 && isAlpha(f.Tokens[i][0]){ // 英文开头，加空格
-							ans += " "+f.Tokens[i]
-						} else if strings.HasPrefix(f.Tokens[i], "##"){ // ##开头，是英文中段，去掉##
-							ans += f.Tokens[i][2:]
-						} else {
-							ans += f.Tokens[i]
-						}
+						ans += orig_token[i].value
 					}
 					// start 是相对位置，所以要加上 posOffset, 开头有[CLS],所以减1
-					result = append(result, nerStruct{start+posOffset-1, labelName[l], ans})
+					result = append(result, nerStruct{orig_token[start].startPos+posOffset, labelName[l], ans})
 				}
 			}
 		}

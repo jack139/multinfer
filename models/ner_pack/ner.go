@@ -11,9 +11,6 @@ import (
 /*  定义模型相关参数和方法  */
 type NER struct{}
 
-/* 用于分割文本 */
-var seperators = []string{"；", "，", "。", ",", "）", "、", ";"}
-
 
 func (x *NER) Init() error {
 	return initModel()
@@ -41,15 +38,6 @@ func (x *NER) ApiEntry(reqData *map[string]interface{}) (*map[string]interface{}
 }
 
 
-func findSeperator(a string) bool {
-	for _, b := range seperators {
-		if b == a {
-			return true
-		}
-	}
-	return false
-}
-
 // NER 推理
 func (x *NER) Infer(reqId string, reqData *map[string]interface{}) (*map[string]interface{}, error) {
 	log.Println("Infer_NER")
@@ -62,10 +50,10 @@ func (x *NER) Infer(reqId string, reqData *map[string]interface{}) (*map[string]
 
 	posOffset := 0
 	for posOffset < len(text) {
-		if len(text[posOffset:]) > MaxSeqLength {
+		if len(text[posOffset:]) > MaxSeqLength { // 文本长度大于最大限制，则分段处理
 			var n int
 			for n=MaxSeqLength;n>0;n-- {
-				if findSeperator(string(text[posOffset:][n])) {
+				if strInStrings(string(text[posOffset:][n]), seperators) {
 					break
 				}
 			}
@@ -79,7 +67,7 @@ func (x *NER) Infer(reqId string, reqData *map[string]interface{}) (*map[string]
 			return &map[string]interface{}{"code":code}, err
 		}
 
-		log.Println(ans)
+		//log.Println(ans)
 
 		if ans!=nil {
 			result = append(result, ans...)
@@ -88,17 +76,19 @@ func (x *NER) Infer(reqId string, reqData *map[string]interface{}) (*map[string]
 		posOffset += len(text1)
 	}
 
+	// 按起始位置排序
 	sort.Slice(result, func(i, j int) bool { return result[i].startPos < result[j].startPos })
 
-	log.Println(result)
+	//log.Println(result)
 
+	// 准备返回结果
 	var result2 []map[string]interface{}
 	if result!=nil {
-		for i := range result{
+		for _, v := range result{
 			result2 = append(result2, map[string]interface{}{
-				"start_pos" : result[i].startPos,
-				"label" : result[i].label,
-				"value" : result[i].value,
+				"start_pos" : v.startPos,
+				"label" :     v.label,
+				"value" :     v.value,
 			})
 		}
 	}
