@@ -111,13 +111,15 @@ def call_api(cate, body_data):
 
     pool = urllib3.PoolManager(num_pools=2, timeout=180, retries=False)
 
-    host = 'http://%s:5000'%hostname
 
     if cate=='antigen':
+        host = 'http://%s:5000'%hostname
         url = host+'/antigen/check'
     elif cate=='ner':
+        host = 'http://%s:5001'%hostname
         url = host+'/ner/ner'
     elif cate=='keras_qa':
+        host = 'http://%s:5001'%hostname
         url = host+'/api/albert_qa'
     else:
         url = host+'/'

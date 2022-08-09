@@ -1,0 +1,142 @@
+#!/bin/sh
+
+APP_DIR="/usr/share/nginx/html/cardnum"
+FACE_APP_DIR="/usr/share/nginx/html/yhfacelib"
+#QA_DIR="/usr/share/nginx/html/qa_demo"
+#NER_DIR="/usr/share/nginx/html/ner_test"
+#ANTIGEN_DIR="/usr/share/nginx/html/antigen"
+#GO_ANTIGEN_DIR="/app/antigen"
+
+GO_MULTINFER_DIR="/app/multinfer"
+MULTINFER_DEMO_DIR="/app/multinfer/bin/demo"
+
+LOG_PATH="/var/log/nginx"
+
+start_web() {
+        uwsgi  -s /tmp/uwsgi_card.sock -C -M -p 2 -t 60 --limit-as 1024 -R 1000 --uid nobody --gid nobody \
+               -d $LOG_PATH"/uwsgi_card.log" --pidfile /tmp/uwsgi_card.pid --pythonpath $APP_DIR
+        uwsgi  -s /tmp/uwsgi_face.sock -C -M -p 2 -t 60 --limit-as 1024 -R 1000 --uid nobody --gid nobody \
+               -d $LOG_PATH"/uwsgi_face.log" --pidfile /tmp/uwsgi_face.pid --pythonpath $FACE_APP_DIR
+        #uwsgi  -s /tmp/uwsgi_qa.sock -C -M -p 2 -t 15 --limit-as 1024 -R 1000 --uid nobody --gid nobody \
+        #       -d $LOG_PATH"/uwsgi_qa.log" --pidfile /tmp/uwsgi_qa.pid --pythonpath $QA_DIR
+        #uwsgi  -s /tmp/uwsgi_ner.sock -C -M -p 2 -t 15 --limit-as 1024 -R 1000 --uid nobody --gid nobody \
+        #       -d $LOG_PATH"/uwsgi_ner.log" --pidfile /tmp/uwsgi_ner.pid --pythonpath $NER_DIR
+        #uwsgi  -s /tmp/uwsgi_antigen.sock -C -M -p 2 -t 60 --limit-as 1024 -R 1000 --uid nobody --gid nobody \
+        #       -d $LOG_PATH"/uwsgi_antigen.log" --pidfile /tmp/uwsgi_antigen.pid --pythonpath $ANTIGEN_DIR
+
+        uwsgi  -s /tmp/uwsgi_demo.sock -C -M -p 2 -t 60 --limit-as 1024 -R 1000 --uid nobody --gid nobody \
+               -d $LOG_PATH"/uwsgi_demo.log" --pidfile /tmp/uwsgi_demo.pid --pythonpath $MULTINFER_DEMO_DIR
+
+        nginx
+        return 0
+}
+
+start_back() {
+        nohup python3 $APP_DIR"/daemon.pyc" $APP_DIR $LOG_PATH >> $LOG_PATH"/daemon.log"  &
+        nohup python3 $FACE_APP_DIR"/daemon.pyc" $FACE_APP_DIR $LOG_PATH >> $LOG_PATH"/face_daemon.log"  &
+        nohup $FACE_APP_DIR"/gosearch" server DEFAULT --threshold "-0.27" --face 100 --gonum 4 >> \
+              $LOG_PATH"/face_gosearch.log"  &
+
+        #nohup python3 $QA_DIR"/daemon.pyc" $QA_DIR $LOG_PATH >> $LOG_PATH"/qa_daemon.log"  &
+        #nohup python3 $NER_DIR"/daemon.pyc" $NER_DIR $LOG_PATH >> $LOG_PATH"/ner_daemon.log"  &
+        #nohup python3 $ANTIGEN_DIR"/daemon.pyc" $ANTIGEN_DIR $LOG_PATH >> $LOG_PATH"/antigen_daemon.log"  &
+
+        #LD_LIBRARY_PATH=/usr/local/lib nohup $GO_ANTIGEN_DIR"/bin/antigen-go" server 0 --yaml $GO_ANTIGEN_DIR"/conf/settings.yaml" >> $LOG_PATH"/goantigen_server_0.log" &
+        #LD_LIBRARY_PATH=/usr/local/lib nohup $GO_ANTIGEN_DIR"/bin/antigen-go" http --yaml $GO_ANTIGEN_DIR"/conf/settings.yaml" >> $LOG_PATH"/goantigen_http.log" &
+
+        LD_LIBRARY_PATH=/usr/local/lib nohup $GO_MULTINFER_DIR"/bin/multinfer" server 0 --yaml $GO_MULTINFER_DIR"/config/settings.yaml" >> $LOG_PATH"/multinfer_server_0.log" &
+        LD_LIBRARY_PATH=/usr/local/lib nohup $GO_MULTINFER_DIR"/bin/multinfer" http --yaml $GO_MULTINFER_DIR"/config/settings.yaml" >> $LOG_PATH"/multinfer_http.log" &
+
+        return 0 
+}
+
+stop_web() {
+        nginx -s quit
+        kill -9 `pgrep -f "uwsgi"`
+        sleep 1
+        kill -9 `pgrep -f "nginx"`
+        return 0
+}
+
+stop_back() {
+        kill -9 `pgrep -f "daemon.py"`
+        kill -9 `pgrep -f "dispatcher.py"`
+        #kill -9 `pgrep -f "gosearch"`
+        #kill -9 `pgrep -f "antigen-go"`
+        kill -9 `pgrep -f "multinfer"`
+        return 0
+}
+
+status() {
+        ps -f -C uwsgi -C nginx -C python3 -C multinfer
+        return 0
+}
+
+reload() {
+        nginx -s reload
+        return 0
+}
+
+restart() {
+        stop_web
+        stop_back
+        sleep 1
+        start_web
+        start_back
+}
+
+
+case "$1" in
+    start)
+        case "$2" in
+          web)
+                start_web
+                RETVAL=$?
+                ;;
+          back)
+                start_back
+                RETVAL=$?
+                ;;
+          *)
+                start_web
+                start_back
+                RETVAL=$?
+                ;;
+        esac
+        ;;
+    stop)
+        case "$2" in
+          web)
+                stop_web
+                RETVAL=$?
+                ;;
+          back)
+                stop_back
+                RETVAL=$?
+                ;;
+          *)
+                stop_web
+                stop_back
+                RETVAL=$?
+                ;;
+        esac 
+        ;;
+    restart)
+        restart
+        RETVAL=$?
+        ;;
+    reload)
+        reload
+        RETVAL=$?
+        ;;
+    status)
+        status
+        RETVAL=$?
+        ;;
+    *)
+        echo $"Usage: my_server {start|stop|restart} {web|back|all} | reload | status"
+        RETVAL=2
+        ;;
+esac
+
+exit $RETVAL

@@ -30,15 +30,17 @@ build/multinfer http
 
 
 
+### 启动 demo
+
+```
+cd demo
+python3 app.py
+```
+
+
+
 ### 测试脚本
 
 ```
-python3 test_api.py 127.0.0.1 _
-```
-
-
-
-### 压力测试
-```
-python3 stress_test.py 1 1
+python3 test_api.py 127.0.0.1 ner _
 ```
