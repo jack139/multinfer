@@ -93,10 +93,12 @@ func modleInfer(text string, posOffset int) ([]nerStruct, int, error){
 			// 其他bert标签 [CLS] [SEP] [PAD] [unused] 等
 			continue 
 		} 
-		if strings.HasPrefix(v, "##") { // 英文
+		if strings.HasPrefix(v, "##") { // 英文, ##前不用处理空格的问题
 			orig_token[i] = nerStruct{orig_pos, "", string(orig_text[orig_pos:orig_pos+len(v)-2])}
 			orig_pos = orig_pos + len(v) - 2
 		} else {
+			// 匹配字符串，可以跳过可能的空格
+			for string(orig_text[orig_pos:orig_pos+len([]rune(v))]) != v { orig_pos++ }
 			orig_token[i] = nerStruct{orig_pos, "", string(orig_text[orig_pos:orig_pos+len([]rune(v))])}
 			orig_pos = orig_pos + len([]rune(v))
 		}
