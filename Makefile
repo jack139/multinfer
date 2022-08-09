@@ -1,6 +1,8 @@
 BUILD=build
+PY = python3.6 -O -m compileall -b -q -f
+PYSRC = demo/
 
-all: clean build
+all: clean build pydemo
 
 build: go.sum
 	@echo "Building ..."
@@ -9,6 +11,17 @@ build: go.sum
 go.sum: go.mod
 	@echo "Ensure dependencies have not been modified"
 	@GO111MODULE=on go mod verify
+
+
+pydemo:
+	@echo "Compiling demo ..."
+	@mkdir -p $(BUILD)
+	@cp -r $(PYSRC) $(BUILD)/
+	@-$(PY) $(BUILD)/demo
+	@find $(BUILD)/demo -name '*.py' -delete
+	@find $(BUILD)/demo -name "__pycache__" |xargs rm -rf
+	@rm $(BUILD)/demo/config/settings.pyc
+	@cp $(PYSRC)/config/settings.py $(BUILD)/demo/config/
 
 clean:
 	@echo "Clean old built"
