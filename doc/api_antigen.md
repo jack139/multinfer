@@ -143,7 +143,7 @@ SM2加签结果（每次不同）：
 | ---------- | ---- | ------ | -------------------- |
 | result     | 是   | string | 粗分识别结果，见下表 |
 | comment    | 是   | string | 细分识别结果，见下表 |
-| request_id | 是   | string | 此次请求id           |
+| requestId | 是   | string | 此次请求id           |
 
 > 识别结果说明：
 >
