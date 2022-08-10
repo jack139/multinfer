@@ -98,7 +98,9 @@ func modleInfer(text string, posOffset int) ([]nerStruct, int, error){
 			orig_pos = orig_pos + len(v) - 2
 		} else {
 			// 匹配字符串，可以跳过可能的空格
-			for string(orig_text[orig_pos:orig_pos+len([]rune(v))]) != v { orig_pos++ }
+			for strings.ToLower(
+					string(orig_text[orig_pos:orig_pos+len([]rune(v))]),
+				) != strings.ToLower(v) { orig_pos++ }
 			orig_token[i] = nerStruct{orig_pos, "", string(orig_text[orig_pos:orig_pos+len([]rune(v))])}
 			orig_pos = orig_pos + len([]rune(v))
 		}
