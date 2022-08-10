@@ -5,7 +5,7 @@ from flask import Flask, Blueprint, render_template, request
 import urllib3, json, base64, time, hashlib
 from datetime import datetime
 from utils import helper, sm2
-from config.settings import MAX_IMAGE_SIZE
+from config.settings import MAX_IMAGE_SIZE, DEMO_ANTIGEN, DEMO_NER_PACK, DEMO_KERAS_QA
 
 
 ALLOWED_EXTENSIONS = set(['png', 'jpg', 'jpeg'])
@@ -113,16 +113,13 @@ def call_api(cate, body_data):
 
 
     if cate=='antigen':
-        host = 'http://%s:5000'%hostname
-        url = host+'/antigen/check'
+        url = f'http://{hostname}:{DEMO_ANTIGEN[0]}{DEMO_ANTIGEN[1]}'
     elif cate=='ner':
-        host = 'http://%s:5001'%hostname
-        url = host+'/ner/ner'
+        url = f'http://{hostname}:{DEMO_NER_PACK[0]}{DEMO_NER_PACK[1]}'
     elif cate=='keras_qa':
-        host = 'http://%s:5001'%hostname
-        url = host+'/api/albert_qa'
+        url = f'http://{hostname}:{DEMO_KERAS_QA[0]}{DEMO_KERAS_QA[1]}'
     else:
-        url = host+'/'
+        return "", "", 500, "", ""
 
     start_time = datetime.now()
     r = pool.urlopen('POST', url, body=body_str)
