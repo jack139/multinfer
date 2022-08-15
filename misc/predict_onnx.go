@@ -6,9 +6,16 @@ import (
 	"image"
 	"image/color"
 	"log"
+	"sort"
 
 	"github.com/ivansuteja96/go-onnxruntime"
 	"github.com/disintegration/imaging"
+)
+
+const (
+	det_model_input_size = 224
+	nms_thresh = float32(0.4)
+	det_thresh = float32(0.5)
 )
 
 // LD_LIBRARY_PATH=/usr/local/lib go run predict_onnx.go
@@ -22,10 +29,10 @@ func main() {
 		return
 	}
 
-	shape1 := []int64{1, 3, 224, 224}
-	input1 := preprocessImage("../../source/5a.jpg", 224)
+	shape1 := []int64{1, 3, det_model_input_size, det_model_input_size}
+	input1, det_scale := preprocessImage("../../source/6.jpg", det_model_input_size)
 
-	fmt.Println(input1[:100])
+	//fmt.Println(input1[:100])
 
 	res, err := detModel.Predict([]onnxruntime.TensorValue{
 		{
@@ -43,7 +50,7 @@ func main() {
 		return
 	}
 
-	_,_ = processResult(res)
+	_,_ = processResult(res, det_scale)
 
 }
 
@@ -59,18 +66,30 @@ func Transpose(rgbs []float32) []float32 {
 	return out
 }
 
-func preprocessImage(imageFile string, inputSize int) []float32 {
+func preprocessImage(imageFile string, inputSize int) ([]float32, float32) {
 	src, err := imaging.Open(imageFile)
 	if err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "Error: %s\n", err.Error())
 		os.Exit(1)
 	}
 
-	rgbs := make([]float32, inputSize*inputSize*3)
+	var newHeight, newWidth int
+	im_ratio := float32(src.Bounds().Dx()) / float32(src.Bounds().Dy())
+	if im_ratio > 1 { // width > height
+		newWidth = inputSize
+		newHeight = int(float32(newWidth) / im_ratio)
+	} else {
+		newHeight = inputSize
+		newWidth = int(float32(newHeight) * im_ratio)		
+	}
 
-	result := imaging.Resize(src, 163, 224, imaging.Lanczos)
+	fmt.Println(newWidth, newHeight)
+
+	result := imaging.Resize(src, newWidth, newHeight, imaging.Lanczos)
 	fmt.Println("resize: ", result.Rect)
 	result = padBox(result)
+
+	rgbs := make([]float32, inputSize*inputSize*3)
 
 	j := 0
 	for i := range result.Pix {
@@ -80,7 +99,7 @@ func preprocessImage(imageFile string, inputSize int) []float32 {
 		}
 	}
 
-	fmt.Println(rgbs[:100])
+	//fmt.Println(rgbs[:100])
 
 	rgbs = Transpose(rgbs)
 
@@ -92,7 +111,7 @@ func preprocessImage(imageFile string, inputSize int) []float32 {
 		rgbs[i+channelLength] = normalize(rgbs[i+channelLength], 127.5, 128.0)
 		rgbs[i+channelLength*2] = normalize(rgbs[i+channelLength*2], 127.5, 128.0)
 	}
-	return rgbs
+	return rgbs, float32(newHeight)/float32(src.Bounds().Dx())
 }
 
 func normalize(in float32, m float32, s float32) float32 {
@@ -113,13 +132,13 @@ func padBox(src image.Image) *image.NRGBA {
 	dst := imaging.New(maxW, maxW, color.Black)
 	dst = imaging.Paste(dst, src, image.Point{0,0})
 
-	//_ = imaging.Save(dst, "/tmp/test2.jpg")
+	_ = imaging.Save(dst, "/tmp/test2.jpg")
 
 	return dst
 }
 
 // 处理推理结果
-func processResult(net_outs []onnxruntime.TensorValue) ([]float32, error) {
+func processResult(net_outs []onnxruntime.TensorValue, det_scale float32) ([]float32, error) {
 	for i:=0;i<len(net_outs);i++ {
 		fmt.Printf("Success do predict, shape : %+v, result : %+v\n", 
 			net_outs[i].Shape, 
@@ -131,11 +150,8 @@ func processResult(net_outs []onnxruntime.TensorValue) ([]float32, error) {
 	_fmc := 3
 	_feat_stride_fpn := []int{8, 16, 32}
 	_num_anchors := 2
-	_use_kps := true
+	//_use_kps := true
 
-	input_height := 224
-	input_width := 224
-	threshold := float32(0.5)
 
 	center_cache := make(map[string][][]float32)
 
@@ -149,17 +165,15 @@ func processResult(net_outs []onnxruntime.TensorValue) ([]float32, error) {
 		for i := range bbox_preds { 
 			bbox_preds[i] = bbox_preds[i] * float32(stride)
 		}
-		var kps_preds []float32
-		if _use_kps {
-			kps_preds = net_outs[idx+_fmc*2].Value.([]float32)
-			for i := range kps_preds { 
-				kps_preds[i] = kps_preds[i] * float32(stride)
-			}
-		}
-		height := input_height / stride
-		width := input_width / stride
-		//K := height * width
-		//key = []int{height, width, stride}
+		//var kps_preds []float32
+		//if _use_kps {
+		//	kps_preds = net_outs[idx+_fmc*2].Value.([]float32)
+		//	for i := range kps_preds { 
+		//		kps_preds[i] = kps_preds[i] * float32(stride)
+		//	}
+		//}
+		height := det_model_input_size / stride
+		width := det_model_input_size / stride
 		key := fmt.Sprintf("%d-%d-%d", height, width, stride)
 		var anchor_centers [][]float32
 		if val, ok := center_cache[key]; ok {
@@ -180,18 +194,18 @@ func processResult(net_outs []onnxruntime.TensorValue) ([]float32, error) {
 			}		
 		}
 
-		// threshold == 0.5
+		// det_thresh == 0.5
 		var pos_inds []int
 		for i := range scores {
-			if scores[i]>threshold {
+			if scores[i]>det_thresh {
 				pos_inds = append(pos_inds, i)
 			}
 		}
-		fmt.Println(">threshold:", pos_inds)
+		fmt.Println(">det_thresh:", pos_inds)
 
 		bboxes := distance2bbox(anchor_centers, bbox_preds)
 
-		fmt.Println(bboxes[len(bboxes)-1])
+		//fmt.Println(bboxes[len(bboxes)-1])
 
 		for i:=range pos_inds {
 			scores_list = append(scores_list, scores[pos_inds[i]])
@@ -200,6 +214,20 @@ func processResult(net_outs []onnxruntime.TensorValue) ([]float32, error) {
 	}
 
 	fmt.Println(scores_list)
+	fmt.Println(bboxes_list)
+
+	// 对应 detect() 后续计算
+
+	for i := range bboxes_list {
+		bboxes_list[i][0] /= det_scale
+		bboxes_list[i][1] /= det_scale
+		bboxes_list[i][2] /= det_scale
+		bboxes_list[i][3] /= det_scale
+		bboxes_list[i] = append(bboxes_list[i], scores_list[i])
+	}
+
+	sort.Slice(bboxes_list, func(i, j int) bool { return bboxes_list[i][4] > bboxes_list[j][4] })
+
 	fmt.Println(bboxes_list)
 
 	return nil, nil
