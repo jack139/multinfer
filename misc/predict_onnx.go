@@ -23,14 +23,14 @@ func main() {
 	ortEnvDet := onnxruntime.NewORTEnv(onnxruntime.ORT_LOGGING_LEVEL_VERBOSE, "development")
 	ortDetSO := onnxruntime.NewORTSessionOptions()
 
-	detModel, err := onnxruntime.NewORTSession(ortEnvDet, "../../multinfer/data/det_10g.onnx", ortDetSO)
+	detModel, err := onnxruntime.NewORTSession(ortEnvDet, "../../../cv/face_model/arcface/models/buffalo_l/det_10g.onnx", ortDetSO)
 	if err != nil {
 		log.Println(err)
 		return
 	}
 
 	shape1 := []int64{1, 3, det_model_input_size, det_model_input_size}
-	input1, det_scale := preprocessImage("../../source/6.jpg", det_model_input_size)
+	input1, det_scale := preprocessImage("data/5.jpg", det_model_input_size)
 
 	//fmt.Println(input1[:100])
 
@@ -111,7 +111,12 @@ func preprocessImage(imageFile string, inputSize int) ([]float32, float32) {
 		rgbs[i+channelLength] = normalize(rgbs[i+channelLength], 127.5, 128.0)
 		rgbs[i+channelLength*2] = normalize(rgbs[i+channelLength*2], 127.5, 128.0)
 	}
-	return rgbs, float32(newHeight)/float32(src.Bounds().Dx())
+
+	det_scale := float32(newHeight) / float32(src.Bounds().Dy())
+
+	fmt.Println("det_scale===", det_scale, float32(newHeight), float32(src.Bounds().Dy()))
+
+	return rgbs, det_scale
 }
 
 func normalize(in float32, m float32, s float32) float32 {
@@ -230,6 +235,14 @@ func processResult(net_outs []onnxruntime.TensorValue, det_scale float32) ([]flo
 
 	fmt.Println(bboxes_list)
 
+	keep := nms(bboxes_list)
+
+	fmt.Println(keep)
+
+	for i := range keep {
+		fmt.Println(bboxes_list[keep[i]])
+	}
+
 	return nil, nil
 }
 
@@ -244,5 +257,61 @@ func distance2bbox(points [][]float32, distance []float32) (ret [][]float32) {
 			points[i][1] + distance[i*4+3],
 		}
 	}
+	return
+}
+
+func max(a, b float32) float32 {
+	if a>b { 
+		return a
+	} else {
+		return b
+	}
+}
+
+func min(a, b float32) float32 {
+	if a<b { 
+		return a
+	} else {
+		return b
+	}
+}
+
+func nms(dets [][]float32) (ret []int) {
+	if len(dets)==0 {
+		return
+	}
+
+	var order []int
+	areas := make([]float32, len(dets))
+	for i := range dets {
+		order = append(order, i)
+		areas[i] = (dets[i][2] - dets[i][0] + 1) * (dets[i][3] - dets[i][1] + 1)
+	}
+	for len(order)>0 {
+		i := order[0]
+		ret = append(ret, i)
+
+		var keep []int
+		for j := range order[1:] {
+			xx1 := max(dets[i][0], dets[order[j+1]][0])
+			yy1 := max(dets[i][1], dets[order[j+1]][1])
+			xx2 := min(dets[i][2], dets[order[j+1]][2])
+			yy2 := min(dets[i][3], dets[order[j+1]][3])
+
+			w := max(0.0, xx2 - xx1 + 1)
+			h := max(0.0, yy2 - yy1 + 1)
+			inter := w * h
+			ovr := inter / (areas[i] + areas[order[j+1]] - inter)
+
+			fmt.Println(i, j, ovr)
+
+			if ovr <= nms_thresh {
+				keep = append(keep, order[j+1])
+			}
+		}
+
+		order = keep
+	}
+
 	return
 }
