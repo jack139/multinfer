@@ -20,7 +20,7 @@ const (
 
 // LD_LIBRARY_PATH=/usr/local/lib go run predict_onnx.go
 func main() {
-	ortEnvDet := onnxruntime.NewORTEnv(onnxruntime.ORT_LOGGING_LEVEL_VERBOSE, "development")
+	ortEnvDet := onnxruntime.NewORTEnv(onnxruntime.ORT_LOGGING_LEVEL_WARNING, "development")
 	ortDetSO := onnxruntime.NewORTSessionOptions()
 
 	detModel, err := onnxruntime.NewORTSession(ortEnvDet, "../../../cv/face_model/arcface/models/buffalo_l/det_10g.onnx", ortDetSO)
@@ -50,7 +50,9 @@ func main() {
 		return
 	}
 
-	_,_ = processResult(res, det_scale)
+	bboxes := processResult(res, det_scale)
+
+	fmt.Println(bboxes)
 
 }
 
@@ -83,10 +85,10 @@ func preprocessImage(imageFile string, inputSize int) ([]float32, float32) {
 		newWidth = int(float32(newHeight) * im_ratio)		
 	}
 
-	fmt.Println(newWidth, newHeight)
+	fmt.Println(src.Bounds(), newWidth, newHeight)
 
 	result := imaging.Resize(src, newWidth, newHeight, imaging.Lanczos)
-	fmt.Println("resize: ", result.Rect)
+	//fmt.Println("resize: ", result.Rect)
 	result = padBox(result)
 
 	rgbs := make([]float32, inputSize*inputSize*3)
@@ -112,11 +114,9 @@ func preprocessImage(imageFile string, inputSize int) ([]float32, float32) {
 		rgbs[i+channelLength*2] = normalize(rgbs[i+channelLength*2], 127.5, 128.0)
 	}
 
-	det_scale := float32(newHeight) / float32(src.Bounds().Dy())
+	//fmt.Println("det_scale===", det_scale, float32(newHeight), float32(src.Bounds().Dy()))
 
-	fmt.Println("det_scale===", det_scale, float32(newHeight), float32(src.Bounds().Dy()))
-
-	return rgbs, det_scale
+	return rgbs, float32(newHeight) / float32(src.Bounds().Dy())
 }
 
 func normalize(in float32, m float32, s float32) float32 {
@@ -143,7 +143,7 @@ func padBox(src image.Image) *image.NRGBA {
 }
 
 // 处理推理结果
-func processResult(net_outs []onnxruntime.TensorValue, det_scale float32) ([]float32, error) {
+func processResult(net_outs []onnxruntime.TensorValue, det_scale float32) [][]float32 {
 	for i:=0;i<len(net_outs);i++ {
 		fmt.Printf("Success do predict, shape : %+v, result : %+v\n", 
 			net_outs[i].Shape, 
@@ -206,7 +206,7 @@ func processResult(net_outs []onnxruntime.TensorValue, det_scale float32) ([]flo
 				pos_inds = append(pos_inds, i)
 			}
 		}
-		fmt.Println(">det_thresh:", pos_inds)
+		//fmt.Println(">det_thresh:", pos_inds)
 
 		bboxes := distance2bbox(anchor_centers, bbox_preds)
 
@@ -218,8 +218,8 @@ func processResult(net_outs []onnxruntime.TensorValue, det_scale float32) ([]flo
 		}
 	}
 
-	fmt.Println(scores_list)
-	fmt.Println(bboxes_list)
+	//fmt.Println(scores_list)
+	//fmt.Println(bboxes_list)
 
 	// 对应 detect() 后续计算
 
@@ -233,17 +233,18 @@ func processResult(net_outs []onnxruntime.TensorValue, det_scale float32) ([]flo
 
 	sort.Slice(bboxes_list, func(i, j int) bool { return bboxes_list[i][4] > bboxes_list[j][4] })
 
-	fmt.Println(bboxes_list)
+	//fmt.Println(bboxes_list)
 
 	keep := nms(bboxes_list)
 
-	fmt.Println(keep)
+	//fmt.Println(keep)
 
+	ret := make([][]float32, len(keep))
 	for i := range keep {
-		fmt.Println(bboxes_list[keep[i]])
+		ret = append(ret, bboxes_list[keep[i]])
 	}
 
-	return nil, nil
+	return ret
 }
 
 
@@ -303,7 +304,7 @@ func nms(dets [][]float32) (ret []int) {
 			inter := w * h
 			ovr := inter / (areas[i] + areas[order[j+1]] - inter)
 
-			fmt.Println(i, j, ovr)
+			//fmt.Println(i, j, ovr)
 
 			if ovr <= nms_thresh {
 				keep = append(keep, order[j+1])
