@@ -10,6 +10,7 @@ import (
 
 	"github.com/ivansuteja96/go-onnxruntime"
 	"github.com/disintegration/imaging"
+	"gocv.io/x/gocv"
 )
 
 const (
@@ -55,6 +56,10 @@ func main() {
 	fmt.Println(dets)
 	fmt.Println(kpss)
 
+	fmt.Printf("gocv version: %s\n", gocv.Version())
+	fmt.Printf("opencv lib version: %s\n", gocv.OpenCVVersion())
+
+	estimate_affine()
 }
 
 
@@ -341,4 +346,44 @@ func nms(dets [][]float32) (ret []int) {
 	}
 
 	return
+}
+
+func estimate_affine() {
+	dst := []gocv.Point2f{
+		{218.78867, 205.74413},
+		{312.13818, 202.18082},
+		{279.89087, 232.69415},
+		{236.05072, 302.79538},
+		{313.98624, 299.34445},
+	}
+
+	src := []gocv.Point2f{
+		{38.2946, 51.6963},
+		{73.5318, 51.5014},
+		{56.0252, 71.7366},
+		{41.5493, 92.3655},
+		{70.7299, 92.2041},
+	}
+
+	pvsrc := gocv.NewPoint2fVectorFromPoints(src)
+	defer pvsrc.Close()
+
+	pvdst := gocv.NewPoint2fVectorFromPoints(dst)
+	defer pvdst.Close()
+
+	m := gocv.EstimateAffinePartial2D(pvdst, pvsrc)
+	defer m.Close()
+
+	//fmt.Println(m.DataPtrUint8())
+	printM(m)
+
+}
+
+func printM(m gocv.Mat) {
+	for i:=0;i<m.Rows();i++ {
+		for j:=0;j<m.Cols();j++ {
+			fmt.Printf("%v ", m.GetFloatAt(i, j))
+		}
+		fmt.Printf("\n")
+	}	
 }
