@@ -50,9 +50,10 @@ func main() {
 		return
 	}
 
-	bboxes := processResult(res, det_scale)
+	dets, kpss := processResult(res, det_scale)
 
-	fmt.Println(bboxes)
+	fmt.Println(dets)
+	fmt.Println(kpss)
 
 }
 
@@ -143,7 +144,7 @@ func padBox(src image.Image) *image.NRGBA {
 }
 
 // 处理推理结果
-func processResult(net_outs []onnxruntime.TensorValue, det_scale float32) [][]float32 {
+func processResult(net_outs []onnxruntime.TensorValue, det_scale float32) ([][]float32, [][]float32) {
 	for i:=0;i<len(net_outs);i++ {
 		fmt.Printf("Success do predict, shape : %+v, result : %+v\n", 
 			net_outs[i].Shape, 
@@ -162,6 +163,7 @@ func processResult(net_outs []onnxruntime.TensorValue, det_scale float32) [][]fl
 
 	var scores_list []float32
 	var bboxes_list [][]float32
+	var kpss_list [][]float32
 
 	for idx := range _feat_stride_fpn {
 		stride := _feat_stride_fpn[idx]
@@ -170,13 +172,13 @@ func processResult(net_outs []onnxruntime.TensorValue, det_scale float32) [][]fl
 		for i := range bbox_preds { 
 			bbox_preds[i] = bbox_preds[i] * float32(stride)
 		}
-		//var kps_preds []float32
-		//if _use_kps {
-		//	kps_preds = net_outs[idx+_fmc*2].Value.([]float32)
-		//	for i := range kps_preds { 
-		//		kps_preds[i] = kps_preds[i] * float32(stride)
-		//	}
-		//}
+
+		var kps_preds []float32 // landmark
+		kps_preds = net_outs[idx+_fmc*2].Value.([]float32)
+		for i := range kps_preds { 
+			kps_preds[i] = kps_preds[i] * float32(stride)
+		}
+
 		height := det_model_input_size / stride
 		width := det_model_input_size / stride
 		key := fmt.Sprintf("%d-%d-%d", height, width, stride)
@@ -208,43 +210,54 @@ func processResult(net_outs []onnxruntime.TensorValue, det_scale float32) [][]fl
 		}
 		//fmt.Println(">det_thresh:", pos_inds)
 
-		bboxes := distance2bbox(anchor_centers, bbox_preds)
+		//fmt.Println("kps_preds", len(kps_preds), kps_preds[len(kps_preds)-1])
 
-		//fmt.Println(bboxes[len(bboxes)-1])
+		bboxes := distance2bbox(anchor_centers, bbox_preds)
+		kpss := distance2kps(anchor_centers, kps_preds)
+
+		//fmt.Println("kpss", len(kpss), kpss[len(kpss)-1])
 
 		for i:=range pos_inds {
 			scores_list = append(scores_list, scores[pos_inds[i]])
 			bboxes_list = append(bboxes_list, bboxes[pos_inds[i]])
+			kpss_list = append(kpss_list, kpss[pos_inds[i]])
 		}
 	}
 
 	//fmt.Println(scores_list)
-	//fmt.Println(bboxes_list)
+	//fmt.Println("kpss_list", kpss_list)
 
 	// 对应 detect() 后续计算
 
 	for i := range bboxes_list {
-		bboxes_list[i][0] /= det_scale
-		bboxes_list[i][1] /= det_scale
-		bboxes_list[i][2] /= det_scale
-		bboxes_list[i][3] /= det_scale
+		for j:=0;j<4;j++ {
+			bboxes_list[i][j] /= det_scale
+		}
 		bboxes_list[i] = append(bboxes_list[i], scores_list[i])
+
+		for j:=0;j<10;j++ {
+			kpss_list[i][j] /= det_scale
+		}
+		kpss_list[i] = append(kpss_list[i], scores_list[i])
 	}
 
 	sort.Slice(bboxes_list, func(i, j int) bool { return bboxes_list[i][4] > bboxes_list[j][4] })
+	sort.Slice(kpss_list, func(i, j int) bool { return kpss_list[i][10] > kpss_list[j][10] })
 
-	//fmt.Println(bboxes_list)
+	//fmt.Println(kpss_list)
 
 	keep := nms(bboxes_list)
 
 	//fmt.Println(keep)
 
-	ret := make([][]float32, len(keep))
+	det := make([][]float32, len(keep))
+	kpss := make([][]float32, len(keep))
 	for i := range keep {
-		ret = append(ret, bboxes_list[keep[i]])
+		det[i] = bboxes_list[keep[i]]
+		kpss[i] = kpss_list[keep[i]]
 	}
 
-	return ret
+	return det, kpss
 }
 
 
@@ -260,6 +273,19 @@ func distance2bbox(points [][]float32, distance []float32) (ret [][]float32) {
 	}
 	return
 }
+
+func distance2kps(points [][]float32, distance []float32) (ret [][]float32) {
+	ret = make([][]float32, len(points))
+	for i := range points {
+		ret[i] = make([]float32, 10)
+		for j:=0;j<10;j=j+2 {
+			ret[i][j]   = points[i][j%2] + distance[i*10+j]
+			ret[i][j+1] = points[i][j%2+1] + distance[i*10+j+1]
+		} 
+	}
+	return
+}
+
 
 func max(a, b float32) float32 {
 	if a>b { 
