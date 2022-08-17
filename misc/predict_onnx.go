@@ -1,4 +1,18 @@
+//go:build !customenv && !static
+// +build !customenv,!static
+
 package main
+
+/*
+#cgo !windows pkg-config: opencv4
+#cgo CXXFLAGS:   --std=c++11
+*/
+
+/*
+#include <stdlib.h>
+#include "predict.h"
+*/
+import "C"
 
 import (
 	"fmt"
@@ -10,7 +24,7 @@ import (
 
 	"github.com/ivansuteja96/go-onnxruntime"
 	"github.com/disintegration/imaging"
-	"gocv.io/x/gocv"
+	//"gocv.io/x/gocv"
 )
 
 const (
@@ -20,6 +34,8 @@ const (
 )
 
 // LD_LIBRARY_PATH=/usr/local/lib go run predict_onnx.go
+// CGO_CPPFLAGS="-I/usr/local/include/opencv4" CGO_LDFLAGS="-L/usr/local/lib -lopencv_core -lopencv_calib3d" go build
+// LD_LIBRARY_PATH=/usr/local/lib ./misc
 func main() {
 	ortEnvDet := onnxruntime.NewORTEnv(onnxruntime.ORT_LOGGING_LEVEL_WARNING, "development")
 	ortDetSO := onnxruntime.NewORTSessionOptions()
@@ -56,14 +72,14 @@ func main() {
 	fmt.Println(dets)
 	fmt.Println(kpss)
 
-	fmt.Printf("gocv version: %s\n", gocv.Version())
-	fmt.Printf("opencv lib version: %s\n", gocv.OpenCVVersion())
+	//fmt.Printf("gocv version: %s\n", Version())
+	//fmt.Printf("opencv lib version: %s\n", OpenCVVersion())
 
 	estimate_affine()
 }
 
 
-func Transpose(rgbs []float32) []float32 {
+func TransposeRGB(rgbs []float32) []float32 {
 	out := make([]float32, len(rgbs))
 	channelLength := len(rgbs) / 3
 	for i := 0; i < channelLength; i++ {
@@ -109,7 +125,7 @@ func preprocessImage(imageFile string, inputSize int) ([]float32, float32) {
 
 	//fmt.Println(rgbs[:100])
 
-	rgbs = Transpose(rgbs)
+	rgbs = TransposeRGB(rgbs)
 
 	//fmt.Println(rgbs[:100])
 
@@ -349,41 +365,94 @@ func nms(dets [][]float32) (ret []int) {
 }
 
 func estimate_affine() {
-	dst := []gocv.Point2f{
+	src := []Point2f{
+		//{0 , 0  },
+		//{10, 5  },
+		//{10, 10 },
+		//{5 , 10 },
+
+		{ 10, 5 ,},
+		{ 10, 10,},
+		{ 5 , 10,},
+		{ 0 , 0 ,},
+	}
+
+	dst := []Point2f{
+		//{0 , 0  },
+		//{10, 0  },
+		//{10, 10 },
+		//{0 , 10 },
+
+		{ 10, 0 , },
+		{ 10, 10, },
+		{ 0 , 10, },
+		{ 0 , 0 , },
+
+	}
+
+/*
+	dst := []Point2f{
 		{218.78867, 205.74413},
 		{312.13818, 202.18082},
 		{279.89087, 232.69415},
 		{236.05072, 302.79538},
 		{313.98624, 299.34445},
+		//{1, 0},
+		//{2, 0},
 	}
 
-	src := []gocv.Point2f{
+	src := []Point2f{
 		{38.2946, 51.6963},
 		{73.5318, 51.5014},
 		{56.0252, 71.7366},
 		{41.5493, 92.3655},
 		{70.7299, 92.2041},
+		//{1, 0},
+		//{1, 0},
 	}
+*/
 
-	pvsrc := gocv.NewPoint2fVectorFromPoints(src)
+	pvsrc := NewPoint2fVectorFromPoints(src)
 	defer pvsrc.Close()
 
-	pvdst := gocv.NewPoint2fVectorFromPoints(dst)
+	pvdst := NewPoint2fVectorFromPoints(dst)
 	defer pvdst.Close()
 
-	m := gocv.EstimateAffinePartial2D(pvdst, pvsrc)
+	fmt.Println(pvdst.ToPoints())
+	fmt.Println(pvsrc.ToPoints())
+
+	inliers := NewMat()
+	defer inliers.Close()
+	method := 4 // cv2.LMEDS
+	ransacProjThreshold := 3.0
+	maxiters := uint(2000)
+	confidence := 0.99
+	refineIters := uint(10)
+
+	m := EstimateAffine2DWithParams(pvdst, pvsrc, inliers, method, ransacProjThreshold, maxiters, confidence, refineIters)
+
 	defer m.Close()
 
 	//fmt.Println(m.DataPtrUint8())
 	printM(m)
-
+	printM(inliers)
 }
 
-func printM(m gocv.Mat) {
+func printM(m Mat) {
 	for i:=0;i<m.Rows();i++ {
 		for j:=0;j<m.Cols();j++ {
 			fmt.Printf("%v ", m.GetFloatAt(i, j))
 		}
 		fmt.Printf("\n")
 	}	
+}
+
+
+// EstimateAffine2DWithParams Computes an optimal affine transformation between two 2D point sets
+// with additional optional parameters.
+//
+// For further details, please see:
+// https://docs.opencv.org/4.0.0/d9/d0c/group__calib3d.html#ga27865b1d26bac9ce91efaee83e94d4dd
+func EstimateAffine2DWithParams(from Point2fVector, to Point2fVector, inliers Mat, method int, ransacReprojThreshold float64, maxIters uint, confidence float64, refineIters uint) Mat {
+	return newMat(C.EstimateAffine2DWithParams(from.p, to.p, inliers.p, C.int(method), C.double(ransacReprojThreshold), C.size_t(maxIters), C.double(confidence), C.size_t(refineIters)))
 }
