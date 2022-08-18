@@ -8,6 +8,11 @@ import (
 	"github.com/ivansuteja96/go-onnxruntime"
 )
 
+const (
+	nms_thresh = float32(0.4)
+	det_thresh = float32(0.5)
+)
+
 // 处理推理结果
 func processResult(net_outs []onnxruntime.TensorValue, det_scale float32) ([][]float32, [][]float32) {
 	for i:=0;i<len(net_outs);i++ {

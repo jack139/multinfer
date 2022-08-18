@@ -1,31 +1,45 @@
 package main
 
+/*
+CGO_LDFLAGS="-L/usr/local/lib -lopencv_core -lopencv_calib3d -lopencv_imgproc" go build
+LD_LIBRARY_PATH=/usr/local/lib ./onnx_test
+*/
+
 import (
 	"log"
 
 	"github.com/ivansuteja96/go-onnxruntime"
+	"github.com/disintegration/imaging"
+	//"gocv.io/x/gocv"
+
+	//"onnx_test/gocvx"
 )
 
 const (
+	test_image_path = "data/5.jpg"
+	detModel_path = "../../../cv/face_model/arcface/models/buffalo_l/det_10g.onnx"
+
 	det_model_input_size = 224
-	nms_thresh = float32(0.4)
-	det_thresh = float32(0.5)
 )
 
-// CGO_LDFLAGS="-L/usr/local/lib -lopencv_core -lopencv_calib3d -lopencv_imgproc" go build
-// LD_LIBRARY_PATH=/usr/local/lib ./onnx_test
 func main() {
 	ortEnvDet := onnxruntime.NewORTEnv(onnxruntime.ORT_LOGGING_LEVEL_WARNING, "development")
 	ortDetSO := onnxruntime.NewORTSessionOptions()
 
-	detModel, err := onnxruntime.NewORTSession(ortEnvDet, "../../../cv/face_model/arcface/models/buffalo_l/det_10g.onnx", ortDetSO)
+	detModel, err := onnxruntime.NewORTSession(ortEnvDet, detModel_path, ortDetSO)
 	if err != nil {
 		log.Println(err)
 		return
 	}
 
+	// load image
+	srcImage, err := imaging.Open(test_image_path)
+	if err != nil {
+		log.Fatal("Error: %s\n", err.Error())
+	}
+
 	shape1 := []int64{1, 3, det_model_input_size, det_model_input_size}
-	input1, det_scale := preprocessImage("data/5.jpg", det_model_input_size)
+	input1, det_scale := preprocessImage(srcImage, det_model_input_size)
 
 	//log.Println(input1[:100])
 
@@ -50,7 +64,22 @@ func main() {
 	log.Println(dets)
 	log.Println(kpss)
 
-	estimate_affine()
+	m := estimate_norm(kpss[0])
+	defer m.Close()
+
+	printM(m)
+
+	//estimate_affine()
+
+	//src, _ := gocvx.ImageToMatRGB(srcImage)
+	//log.Println(src.Cols(), src.Rows())
+
+	//src := gocv4.IMRead(test_image_path, IMReadUnchanged)
+	//defer src.Close()
+	//dst := src.Clone()
+	//defer dst.Close()
+	//gocv.WarpAffine(src, &dst, m, image.Point{112, 112})
+
 }
 
 

@@ -20,12 +20,7 @@ func TransposeRGB(rgbs []float32) []float32 {
 	return out
 }
 
-func preprocessImage(imageFile string, inputSize int) ([]float32, float32) {
-	src, err := imaging.Open(imageFile)
-	if err != nil {
-		log.Fatal("Error: %s\n", err.Error())
-	}
-
+func preprocessImage(src image.Image, inputSize int) ([]float32, float32) {
 	var newHeight, newWidth int
 	im_ratio := float32(src.Bounds().Dx()) / float32(src.Bounds().Dy())
 	if im_ratio > 1 { // width > height

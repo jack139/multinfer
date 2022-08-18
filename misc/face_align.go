@@ -7,11 +7,56 @@ import (
 
 	//"github.com/disintegration/imaging"
 
-	"onnx_test/gocv"
+	"onnx_test/gocvx"
 )
 
+const (
+	face_align_image_size = 112
+)
+
+var (
+	arcface_src = []gocvx.Point2f{
+	   {38.2946, 51.6963},
+       {73.5318, 51.5014},
+       {56.0252, 71.7366},
+       {41.5493, 92.3655},
+       {70.7299, 92.2041},
+   }
+)
+
+// 计算放射 矩阵, 等效 SimilarityTransform()
+func estimate_norm(lmk []float32) gocvx.Mat {
+	dst := make([]gocvx.Point2f, 5)
+	for i:=0;i<5;i++ {
+		dst[i] = gocvx.Point2f{lmk[i*2], lmk[i*2+1]}
+	}
+
+	pvsrc := gocvx.NewPoint2fVectorFromPoints(arcface_src)
+	defer pvsrc.Close()
+
+	pvdst := gocvx.NewPoint2fVectorFromPoints(dst)
+	defer pvdst.Close()
+
+	log.Println(pvdst.ToPoints())
+	log.Println(pvsrc.ToPoints())
+
+	inliers := gocvx.NewMat()
+	defer inliers.Close()
+	method := 4 // cv2.LMEDS
+	ransacProjThreshold := 3.0
+	maxiters := uint(2000)
+	confidence := 0.99
+	refineIters := uint(10)
+
+	m := gocvx.EstimateAffinePartial2DWithParams(pvdst, pvsrc, inliers, method, ransacProjThreshold, maxiters, confidence, refineIters)
+	//defer m.Close()
+
+	return m
+}
+
+// 测试
 func estimate_affine() {
-	dst := []gocv.Point2f{
+	dst := []gocvx.Point2f{
 		{218.78867, 205.74413},
 		{312.13818, 202.18082},
 		{279.89087, 232.69415},
@@ -19,7 +64,7 @@ func estimate_affine() {
 		{313.98624, 299.34445},
 	}
 
-	src := []gocv.Point2f{
+	src := []gocvx.Point2f{
 		{38.2946, 51.6963},
 		{73.5318, 51.5014},
 		{56.0252, 71.7366},
@@ -28,16 +73,16 @@ func estimate_affine() {
 	}
 
 
-	pvsrc := gocv.NewPoint2fVectorFromPoints(src)
+	pvsrc := gocvx.NewPoint2fVectorFromPoints(src)
 	defer pvsrc.Close()
 
-	pvdst := gocv.NewPoint2fVectorFromPoints(dst)
+	pvdst := gocvx.NewPoint2fVectorFromPoints(dst)
 	defer pvdst.Close()
 
 	log.Println(pvdst.ToPoints())
 	log.Println(pvsrc.ToPoints())
 
-	inliers := gocv.NewMat()
+	inliers := gocvx.NewMat()
 	defer inliers.Close()
 	method := 4 // cv2.LMEDS
 	ransacProjThreshold := 3.0
@@ -45,20 +90,20 @@ func estimate_affine() {
 	confidence := 0.99
 	refineIters := uint(10)
 
-	m := gocv.EstimateAffinePartial2DWithParams(pvdst, pvsrc, inliers, method, ransacProjThreshold, maxiters, confidence, refineIters)
+	m := gocvx.EstimateAffinePartial2DWithParams(pvdst, pvsrc, inliers, method, ransacProjThreshold, maxiters, confidence, refineIters)
 	//m := EstimateAffinePartial2D(pvdst, pvsrc)
 	defer m.Close()
 
-	printM(m)
-	printM(inliers)
-
 	log.Println(m.Type(), m.Step())
 
-	v, _ := m.DataPtrFloat64()
-	log.Println(v)	
+	printM(m)
+	//printM(inliers)
+
+	//v, _ := m.DataPtrFloat64()
+	//log.Println(v)	
 }
 
-func printM(m gocv.Mat) {
+func printM(m gocvx.Mat) {
 	for i:=0;i<m.Rows();i++ {
 		for j:=0;j<m.Cols();j++ {
 			fmt.Printf("%v ", m.GetDoubleAt(i, j))

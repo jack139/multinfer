@@ -2,7 +2,7 @@
 #include <iostream>
 #include <vector>
 
-#include "gocv.h"
+#include "gocvx.h"
 
 /*
 // for test: print Point2fVector contents

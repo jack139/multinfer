@@ -1,12 +1,14 @@
-package gocv
+package gocvx
 
 /*
 #include <stdlib.h>
-#include "gocv.h"
+#include "gocvx.h"
 */
 import "C"
 import (
 	"image"
+	//"image/color"
+	//"errors"
 )
 
 // EstimateAffinePartial2D computes an optimal limited affine transformation
@@ -33,3 +35,44 @@ func WarpAffine(src Mat, dst *Mat, m Mat, sz image.Point) {
 
 	C.WarpAffine(src.p, dst.p, m.p, pSize)
 }
+
+/*
+// ImageToMatRGB converts image.Image to gocv.Mat,
+// which represents RGB image having 8bit for each component.
+// Type of Mat is gocv.MatTypeCV8UC3.
+func ImageToMatRGB(img image.Image) (Mat, error) {
+	bounds := img.Bounds()
+	x := bounds.Dx()
+	y := bounds.Dy()
+
+	var data []uint8
+	switch img.ColorModel() {
+	case color.RGBAModel:
+		m, res := img.(*image.RGBA)
+		if true != res {
+			return NewMat(), errors.New("Image color format error")
+		}
+		data = m.Pix
+		// speed up the conversion process of RGBA format
+		src, err := NewMatFromBytes(y, x, MatTypeCV8UC4, data)
+		if err != nil {
+			return NewMat(), err
+		}
+		defer src.Close()
+
+		dst := NewMat()
+		CvtColor(src, &dst, ColorRGBAToBGR)
+		return dst, nil
+
+	default:
+		data := make([]byte, 0, x*y*3)
+		for j := bounds.Min.Y; j < bounds.Max.Y; j++ {
+			for i := bounds.Min.X; i < bounds.Max.X; i++ {
+				r, g, b, _ := img.At(i, j).RGBA()
+				data = append(data, byte(b>>8), byte(g>>8), byte(r>>8))
+			}
+		}
+		return NewMatFromBytes(y, x, MatTypeCV8UC3, data)
+	}
+}
+*/

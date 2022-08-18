@@ -1,4 +1,4 @@
-package gocv
+package gocvx
 
 /*
 #include <stdlib.h>
