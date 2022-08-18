@@ -21,7 +21,7 @@ const (
 )
 
 // LD_LIBRARY_PATH=/usr/local/lib go run predict_onnx.go
-// CGO_CPPFLAGS="-I/usr/local/include/opencv4" CGO_LDFLAGS="-L/usr/local/lib -lopencv_core -lopencv_calib3d" go build -o predict_onnx
+// CGO_CPPFLAGS="-I/usr/local/include/opencv4" CGO_LDFLAGS="-L/usr/local/lib -lopencv_core -lopencv_calib3d -lopencv_imgproc" go build -o predict_onnx
 // LD_LIBRARY_PATH=/usr/local/lib ./predict_onnx
 func main() {
 	ortEnvDet := onnxruntime.NewORTEnv(onnxruntime.ORT_LOGGING_LEVEL_WARNING, "development")

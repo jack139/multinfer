@@ -11,9 +11,8 @@ extern "C" {
 
 #include "core.h"
 
-//Calib
-
 Mat EstimateAffinePartial2DWithParams(Point2fVector from, Point2fVector to, Mat inliers, int method, double ransacReprojThreshold, size_t maxIters, double confidence, size_t refineIters);
+void WarpAffine(Mat src, Mat dst, Mat m, Size dsize);
 
 #ifdef __cplusplus
 }
