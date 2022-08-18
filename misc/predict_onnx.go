@@ -1,18 +1,5 @@
-//go:build !customenv && !static
-// +build !customenv,!static
-
 package main
 
-/*
-#cgo !windows pkg-config: opencv4
-#cgo CXXFLAGS:   --std=c++11
-*/
-
-/*
-#include <stdlib.h>
-#include "predict.h"
-*/
-import "C"
 
 import (
 	"fmt"
@@ -34,8 +21,8 @@ const (
 )
 
 // LD_LIBRARY_PATH=/usr/local/lib go run predict_onnx.go
-// CGO_CPPFLAGS="-I/usr/local/include/opencv4" CGO_LDFLAGS="-L/usr/local/lib -lopencv_core -lopencv_calib3d" go build
-// LD_LIBRARY_PATH=/usr/local/lib ./misc
+// CGO_CPPFLAGS="-I/usr/local/include/opencv4" CGO_LDFLAGS="-L/usr/local/lib -lopencv_core -lopencv_calib3d" go build -o predict_onnx
+// LD_LIBRARY_PATH=/usr/local/lib ./predict_onnx
 func main() {
 	ortEnvDet := onnxruntime.NewORTEnv(onnxruntime.ORT_LOGGING_LEVEL_WARNING, "development")
 	ortDetSO := onnxruntime.NewORTSessionOptions()
@@ -365,40 +352,30 @@ func nms(dets [][]float32) (ret []int) {
 }
 
 func estimate_affine() {
-	src := []Point2f{
-		//{0 , 0  },
-		//{10, 5  },
-		//{10, 10 },
-		//{5 , 10 },
 
-		{ 10, 5 ,},
-		{ 10, 10,},
-		{ 5 , 10,},
-		{ 0 , 0 ,},
+/*
+	src := []Point2f{
+		{0 , 0  },
+		{10, 0  },
+		{10, 10 },
+		{0 , 10 },
 	}
 
 	dst := []Point2f{
-		//{0 , 0  },
-		//{10, 0  },
-		//{10, 10 },
-		//{0 , 10 },
-
-		{ 10, 0 , },
-		{ 10, 10, },
-		{ 0 , 10, },
-		{ 0 , 0 , },
-
+		{0 , 0  },
+		{10, 5  },
+		{10, 10 },
+		{5 , 10 },
 	}
+*/
 
-/*
+
 	dst := []Point2f{
 		{218.78867, 205.74413},
 		{312.13818, 202.18082},
 		{279.89087, 232.69415},
 		{236.05072, 302.79538},
 		{313.98624, 299.34445},
-		//{1, 0},
-		//{2, 0},
 	}
 
 	src := []Point2f{
@@ -407,10 +384,8 @@ func estimate_affine() {
 		{56.0252, 71.7366},
 		{41.5493, 92.3655},
 		{70.7299, 92.2041},
-		//{1, 0},
-		//{1, 0},
 	}
-*/
+
 
 	pvsrc := NewPoint2fVectorFromPoints(src)
 	defer pvsrc.Close()
@@ -429,30 +404,25 @@ func estimate_affine() {
 	confidence := 0.99
 	refineIters := uint(10)
 
-	m := EstimateAffine2DWithParams(pvdst, pvsrc, inliers, method, ransacProjThreshold, maxiters, confidence, refineIters)
-
+	m := EstimateAffinePartial2DWithParams(pvdst, pvsrc, inliers, method, ransacProjThreshold, maxiters, confidence, refineIters)
+	//m := EstimateAffinePartial2D(pvdst, pvsrc)
 	defer m.Close()
 
-	//fmt.Println(m.DataPtrUint8())
 	printM(m)
 	printM(inliers)
+
+	fmt.Println(m.Type(), m.Step())
+
+	v, _ := m.DataPtrFloat64()
+	fmt.Println(v)	
 }
 
 func printM(m Mat) {
 	for i:=0;i<m.Rows();i++ {
 		for j:=0;j<m.Cols();j++ {
-			fmt.Printf("%v ", m.GetFloatAt(i, j))
+			fmt.Printf("%v ", m.GetDoubleAt(i, j))
 		}
 		fmt.Printf("\n")
 	}	
 }
 
-
-// EstimateAffine2DWithParams Computes an optimal affine transformation between two 2D point sets
-// with additional optional parameters.
-//
-// For further details, please see:
-// https://docs.opencv.org/4.0.0/d9/d0c/group__calib3d.html#ga27865b1d26bac9ce91efaee83e94d4dd
-func EstimateAffine2DWithParams(from Point2fVector, to Point2fVector, inliers Mat, method int, ransacReprojThreshold float64, maxIters uint, confidence float64, refineIters uint) Mat {
-	return newMat(C.EstimateAffine2DWithParams(from.p, to.p, inliers.p, C.int(method), C.double(ransacReprojThreshold), C.size_t(maxIters), C.double(confidence), C.size_t(refineIters)))
-}
