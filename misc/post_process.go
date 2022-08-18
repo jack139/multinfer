@@ -1,7 +1,7 @@
 package main
 
 import (
-	"log"
+	//"log"
 	"fmt"
 	"sort"
 
@@ -15,12 +15,12 @@ const (
 
 // 处理推理结果
 func processResult(net_outs []onnxruntime.TensorValue, det_scale float32) ([][]float32, [][]float32) {
-	for i:=0;i<len(net_outs);i++ {
-		log.Printf("Success do predict, shape : %+v, result : %+v\n", 
-			net_outs[i].Shape, 
-			net_outs[i].Value.([]float32)[:net_outs[i].Shape[1]], // only show one value
-		)
-	}
+	//for i:=0;i<len(net_outs);i++ {
+	//	log.Printf("Success do predict, shape : %+v, result : %+v\n", 
+	//		net_outs[i].Shape, 
+	//		net_outs[i].Value.([]float32)[:net_outs[i].Shape[1]], // only show one value
+	//	)
+	//}
 
 	// len(outputs)==9
 	_fmc := 3

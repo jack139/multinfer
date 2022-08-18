@@ -1,7 +1,7 @@
 package main
 
 import (
-	"log"
+	//"log"
 	"image"
 	"image/color"
 
@@ -31,7 +31,7 @@ func preprocessImage(src image.Image, inputSize int) ([]float32, float32) {
 		newWidth = int(float32(newHeight) * im_ratio)		
 	}
 
-	log.Println(src.Bounds(), newWidth, newHeight)
+	//log.Println(src.Bounds(), newWidth, newHeight)
 
 	result := imaging.Resize(src, newWidth, newHeight, imaging.Lanczos)
 	//log.Println("resize: ", result.Rect)
@@ -83,7 +83,36 @@ func padBox(src image.Image) *image.NRGBA {
 	dst := imaging.New(maxW, maxW, color.Black)
 	dst = imaging.Paste(dst, src, image.Point{0,0})
 
-	_ = imaging.Save(dst, "/tmp/test2.jpg")
+	//_ = imaging.Save(dst, "data/test2.jpg")
 
 	return dst
+}
+
+func preprocessFace(src image.Image, inputSize int) ([]float32) {
+	result := padBox(src)
+
+	rgbs := make([]float32, inputSize*inputSize*3)
+
+	j := 0
+	for i := range result.Pix {
+		if (i+1)%4 != 0 {
+			rgbs[j] = float32(result.Pix[i])
+			j++
+		}
+	}
+
+	//log.Println(rgbs[:100])
+
+	rgbs = TransposeRGB(rgbs)
+
+	//log.Println(rgbs[:100])
+
+	channelLength := len(rgbs) / 3
+	for i := 0; i < channelLength; i++ {
+		rgbs[i] = normalize(rgbs[i], 127.5, 127.5)
+		rgbs[i+channelLength] = normalize(rgbs[i+channelLength], 127.5, 127.5)
+		rgbs[i+channelLength*2] = normalize(rgbs[i+channelLength*2], 127.5, 127.5)
+	}
+
+	return rgbs
 }
