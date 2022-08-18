@@ -7,12 +7,12 @@ LD_LIBRARY_PATH=/usr/local/lib ./onnx_test
 
 import (
 	"log"
+	"image"
 
 	"github.com/ivansuteja96/go-onnxruntime"
 	"github.com/disintegration/imaging"
-	//"gocv.io/x/gocv"
 
-	//"onnx_test/gocvx"
+	"onnx_test/gocvx"
 )
 
 const (
@@ -71,15 +71,19 @@ func main() {
 
 	//estimate_affine()
 
-	//src, _ := gocvx.ImageToMatRGB(srcImage)
-	//log.Println(src.Cols(), src.Rows())
+	src, _ := gocvx.ImageToMatRGB(srcImage)
+	log.Println(src.Cols(), src.Rows())
 
-	//src := gocv4.IMRead(test_image_path, IMReadUnchanged)
-	//defer src.Close()
-	//dst := src.Clone()
-	//defer dst.Close()
-	//gocv.WarpAffine(src, &dst, m, image.Point{112, 112})
+	dst := src.Clone()
+	defer dst.Close()
 
+	gocvx.WarpAffine(src, &dst, m, image.Point{112, 112})
+
+	log.Println(dst.Cols(), dst.Rows())
+
+	aimg, _ := dst.ToImage()
+
+	_ = imaging.Save(aimg, "data/aimg.jpg")
 }
 
 

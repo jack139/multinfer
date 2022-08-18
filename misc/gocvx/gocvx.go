@@ -7,9 +7,24 @@ package gocvx
 import "C"
 import (
 	"image"
-	//"image/color"
-	//"errors"
+	"image/color"
+	"errors"
 )
+
+type ColorConversionCode int
+
+const (
+	// ColorBGRToRGBA converts from BGR to RGB with alpha channel.
+	ColorBGRToRGBA ColorConversionCode = 2
+
+	// ColorRGBAToBGR converts from RGB with alpha to BGR color space.
+	ColorRGBAToBGR ColorConversionCode = 3
+
+	// ColorBGRAToRGBA converts from BGR with alpha channel
+	// to RGB with alpha channel.
+	ColorBGRAToRGBA ColorConversionCode = 5
+)
+
 
 // EstimateAffinePartial2D computes an optimal limited affine transformation
 // with 4 degrees of freedom between two 2D point sets.
@@ -36,7 +51,7 @@ func WarpAffine(src Mat, dst *Mat, m Mat, sz image.Point) {
 	C.WarpAffine(src.p, dst.p, m.p, pSize)
 }
 
-/*
+
 // ImageToMatRGB converts image.Image to gocv.Mat,
 // which represents RGB image having 8bit for each component.
 // Type of Mat is gocv.MatTypeCV8UC3.
@@ -75,4 +90,61 @@ func ImageToMatRGB(img image.Image) (Mat, error) {
 		return NewMatFromBytes(y, x, MatTypeCV8UC3, data)
 	}
 }
-*/
+
+// CvtColor converts an image from one color space to another.
+// It converts the src Mat image to the dst Mat using the
+// code param containing the desired ColorConversionCode color space.
+//
+// For further details, please see:
+// http://docs.opencv.org/master/d7/d1b/group__imgproc__misc.html#ga4e0972be5de079fed4e3a10e24ef5ef0
+//
+func CvtColor(src Mat, dst *Mat, code ColorConversionCode) {
+	C.CvtColor(src.p, dst.p, C.int(code))
+}
+
+
+// ToImage converts a Mat to a image.Image.
+func (m *Mat) ToImage() (image.Image, error) {
+	switch m.Type() {
+	case MatTypeCV8UC1:
+		img := image.NewGray(image.Rect(0, 0, m.Cols(), m.Rows()))
+		data, err := m.DataPtrUint8()
+		if err != nil {
+			return nil, err
+		}
+		copy(img.Pix, data[0:])
+		return img, nil
+
+	case MatTypeCV8UC3:
+		dst := NewMat()
+		defer dst.Close()
+
+		C.CvtColor(m.p, dst.p, C.int(ColorBGRToRGBA))
+
+		img := image.NewRGBA(image.Rect(0, 0, m.Cols(), m.Rows()))
+		data, err := dst.DataPtrUint8()
+		if err != nil {
+			return nil, err
+		}
+
+		copy(img.Pix, data[0:])
+		return img, nil
+
+	case MatTypeCV8UC4:
+		dst := NewMat()
+		defer dst.Close()
+
+		C.CvtColor(m.p, dst.p, C.int(ColorBGRAToRGBA))
+
+		img := image.NewNRGBA(image.Rect(0, 0, m.Cols(), m.Rows()))
+		data, err := dst.DataPtrUint8()
+		if err != nil {
+			return nil, err
+		}
+		copy(img.Pix, data[0:])
+		return img, nil
+
+	default:
+		return nil, errors.New("ToImage supports only MatType CV8UC1, CV8UC3 and CV8UC4")
+	}
+}

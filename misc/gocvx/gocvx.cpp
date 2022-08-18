@@ -41,3 +41,7 @@ CV_EXPORTS_W void warpAffine( InputArray src, OutputArray dst,
 							  int borderMode = BORDER_CONSTANT,
 							  const Scalar& borderValue = Scalar());
 */
+
+void CvtColor(Mat src, Mat dst, int code) {
+    cv::cvtColor(*src, *dst, code);
+}
