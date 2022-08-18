@@ -1,4 +1,4 @@
-package main
+package gocv
 
 /*
 #include <stdlib.h>

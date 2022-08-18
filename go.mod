@@ -10,5 +10,4 @@ require (
 	github.com/jack139/go-infer v0.1.11
 	github.com/spf13/cobra v1.5.0
 	github.com/tensorflow/tensorflow v1.15.4
-	gocv.io/x/gocv v0.30.0
 )
