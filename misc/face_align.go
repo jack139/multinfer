@@ -29,7 +29,8 @@ func norm_crop(srcImage image.Image, lmk []float32) (image.Image, error) {
 	m := estimate_norm(lmk)
 	defer m.Close()
 
-	printM(m)
+	// 仿射变化矩阵
+	//printM(m)
 
 	// 转换为 Mat
 	src, err := gocvx.ImageToMatRGB(srcImage)

@@ -114,5 +114,7 @@ func preprocessFace(src image.Image, inputSize int) ([]float32) {
 		rgbs[i+channelLength*2] = normalize(rgbs[i+channelLength*2], 127.5, 127.5)
 	}
 
+	//log.Println(rgbs[:100])
+
 	return rgbs
 }
