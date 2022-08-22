@@ -14,6 +14,7 @@ import (
 	"multinfer/models/bert_qa"
 	"multinfer/models/keras_qa"
 	"multinfer/models/ner_pack"
+	"multinfer/models/yhface"
 )
 
 
@@ -53,6 +54,9 @@ func preRun(cmd *cobra.Command, args []string) error {
 	}
 	if helper.Settings.Customer["Load_NER_pack"] == "1" {
 		types.ModelList = append(types.ModelList, &ner_pack.NER{})
+	}
+	if helper.Settings.Customer["Load_YHFace"] == "1" {
+		types.ModelList = append(types.ModelList, &yhface.FaceLocate{})
 	}
 
 	return nil

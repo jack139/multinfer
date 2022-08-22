@@ -17,7 +17,7 @@ make
 ### 启动 dispatcher
 
 ```
-build/multinfer server 0
+LD_LIBRARY_PATH=/usr/local/lib build/multinfer server 0
 ```
 
 
@@ -25,7 +25,7 @@ build/multinfer server 0
 ### 启动 http
 
 ```
-build/multinfer http
+LD_LIBRARY_PATH=/usr/local/lib build/multinfer http
 ```
 
 
