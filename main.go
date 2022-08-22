@@ -57,6 +57,7 @@ func preRun(cmd *cobra.Command, args []string) error {
 	}
 	if helper.Settings.Customer["Load_YHFace"] == "1" {
 		types.ModelList = append(types.ModelList, &yhface.FaceLocate{})
+		types.ModelList = append(types.ModelList, &yhface.FaceCheck{})
 	}
 
 	return nil
