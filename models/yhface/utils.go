@@ -41,5 +41,5 @@ func cosine(a []float32, b []float32) (cosine float64, err error) {
 	if s1 == 0 || s2 == 0 {
 		return 0.0, fmt.Errorf("Vectors should not be null (all zeros)")
 	}
-	return sumA / (math.Sqrt(s1) * math.Sqrt(s2)), nil
+	return - sumA / (math.Sqrt(s1) * math.Sqrt(s2)), nil
 }

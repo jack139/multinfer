@@ -93,5 +93,6 @@ func (x *FaceVerify) Infer(requestId string, reqData *map[string]interface{}) (*
 	// 保存请求图片和结果
 	saveBackLog(requestId, image1, []byte(fmt.Sprintf("%v", score)))
 
-	return &map[string]interface{}{"score":score}, nil
+	threshold, _ := strconv.ParseFloat(helper.Settings.Customer["FACE_DistanceThreshold"], 32)
+	return &map[string]interface{}{"is_match":score<threshold, "score":score}, nil
 }

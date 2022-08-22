@@ -64,6 +64,6 @@ Customer: { # 以下 key-value 为用户自定义使用
     "FACE_MAX_IMAGE_SIZE" : "3145728", # 图片文件最大 3MB
     "FACE_SAVE_IMAGE" : "1", # 是否保存请求的图片和结果：0 不保存存， 1 保存
     "FACE_SAVE_IMAGE_PATH" : "data/tmp", # 保存的路径 
-    "FACE_DistanceThreshold" : -0.27, # 余弦距离 比较 threshold
+    "FACE_DistanceThreshold" : "-0.27", # 余弦距离 比较 threshold
     "FACE_WARM_UP_IMAGES" : "data/warmup", # 启动时模型热身的图片
 }
