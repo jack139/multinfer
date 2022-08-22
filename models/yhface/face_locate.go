@@ -1,13 +1,10 @@
 package yhface
 
 import (
-	//"os"
-	//"time"
 	"fmt"
 	"log"
 	"strconv"
 	"encoding/base64"
-	//"io/ioutil"
 
 	"github.com/jack139/go-infer/helper"
 )
@@ -77,20 +74,9 @@ func (x *FaceLocate) Infer(requestId string, reqData *map[string]interface{}) (*
 
 	log.Println("face num--> ", len(r), int(maxFace))
 
-	// 保存请求图片和识别结果（文件名中体现结果）
-	/*
-	if helper.Settings.Customer["FACE_SAVE_IMAGE"] == "1" {
-		output_dir := fmt.Sprintf("%s/%s", 
-			helper.Settings.Customer["FACE_SAVE_IMAGE_PATH"], 
-			time.Now().Format("20060102"))
-		err = os.Mkdir(output_dir, 0755) // 建日志目录， 日期 做子目录
-		if err == nil || os.IsExist(err) { // 不处理错误
-			_ = ioutil.WriteFile(fmt.Sprintf("%s/%s_%s.jpg", output_dir, requestId, r), image, 0644)
-		} else {
-			log.Println("ERROR when saving log: ", err.Error())
-		}
-	}
-	*/
+
+	// 保存请求图片和结果
+	saveBackLog(requestId, image, []byte(fmt.Sprintf("%v %v", r, maxFace)))
 
 	// 最多返回 maxFace 个数据
 	if len(r) > int(maxFace) {
