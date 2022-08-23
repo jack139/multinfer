@@ -3,7 +3,7 @@ package facelib
 import (
 	"context"
 	"log"
-	"fmt"
+	"errors"
 	"strings"
 	"io/ioutil"
 	"strconv"
@@ -36,28 +36,8 @@ var (
 func ReadData(groupStr string) error {
 	log.Printf("GONUM= %d\tLimitFace= %d\n", GONUM, LimitFace)
 
-	/*
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	credential := options.Credential{
-		Username: MongoUser,
-		Password: MongoPwd,
-		AuthSource: "face_db",
-	}
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI(MongoURL).SetAuth(credential))
-	if err != nil {
-		panic(err)
-	}
-	defer func() {
-		if err = client.Disconnect(ctx); err != nil {
-			panic(err)
-		}
-	}()
-	*/
-
 	if !Ping() {
-		return fmt.Errorf("DB connection problem.")
+		return errors.New("DB connection problem.")
 	}
 
 	/*
