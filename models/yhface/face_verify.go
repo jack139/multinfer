@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 
 	"github.com/jack139/go-infer/helper"
+	"multinfer/gosearch"
 )
 
 /*  定义模型相关参数和方法  */
@@ -72,8 +73,6 @@ func (x *FaceVerify) Infer(requestId string, reqData *map[string]interface{}) (*
 		return &map[string]interface{}{"code":9002}, fmt.Errorf("图片数据太大")
 	}
 
-	log.Println(len(image2))
-
 	// 模型推理
 	r1, code, err := featuresInfer(image1)
 	if err != nil {
@@ -93,6 +92,5 @@ func (x *FaceVerify) Infer(requestId string, reqData *map[string]interface{}) (*
 	// 保存请求图片和结果
 	saveBackLog(requestId, image1, []byte(fmt.Sprintf("%v", score)))
 
-	threshold, _ := strconv.ParseFloat(helper.Settings.Customer["FACE_DistanceThreshold"], 32)
-	return &map[string]interface{}{"is_match":score<threshold, "score":score}, nil
+	return &map[string]interface{}{"is_match":float32(score)<gosearch.ThreshHold, "score":score}, nil
 }

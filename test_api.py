@@ -90,6 +90,11 @@ if __name__ == '__main__':
             img_data2 = f.read()
         body['data']['image1'] = base64.b64encode(img_data1).decode('utf-8')
         body['data']['image2'] = base64.b64encode(img_data2).decode('utf-8')
+    elif cate=="face_search":
+        url = host+'/face2/search'
+        with open(filepath, 'rb') as f:
+            img_data = f.read()
+        body['data']['image'] = base64.b64encode(img_data).decode('utf-8')
     else: # detpos
         url = host+'/antigen/check'
         with open(filepath, 'rb') as f:

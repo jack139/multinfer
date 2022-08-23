@@ -10,4 +10,5 @@ require (
 	github.com/jack139/go-infer v0.1.11
 	github.com/spf13/cobra v1.5.0
 	github.com/tensorflow/tensorflow v1.15.4
+	go.mongodb.org/mongo-driver v1.7.2
 )

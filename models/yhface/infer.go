@@ -9,6 +9,8 @@ import (
 	"github.com/disintegration/imaging"
 	"github.com/jack139/go-infer/helper"
 	"github.com/jack139/arcface-go/arcface"
+
+	"multinfer/gosearch"
 )
 
 /* 训练好的模型权重 */
@@ -27,6 +29,13 @@ func initModel() error {
 
 		log.Println("Onnx model loaded from: ", helper.Settings.Customer["ArcfaceModelPath"])
 
+
+		// 人脸库装入内存
+		if err = gosearch.LoadFaceData(); err!=nil {
+			return err
+		}
+
+		// 初始化标记
 		initOK = true
 
 		// 模型热身
