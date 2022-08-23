@@ -79,9 +79,17 @@ func (x *FaceVerify) Infer(requestId string, reqData *map[string]interface{}) (*
 		return &map[string]interface{}{"code":code}, err
 	}
 
+	if r1==nil {  // 未检测到人脸
+		return &map[string]interface{}{"is_match":false, "score":0.0}, nil
+	}
+
 	r2, code, err := featuresInfer(image2)
 	if err != nil {
 		return &map[string]interface{}{"code":code}, err
+	}
+
+	if r2==nil {  // 未检测到人脸
+		return &map[string]interface{}{"is_match":false, "score":0.0}, nil
 	}
 
 	score, err := cosine(r1, r2)
