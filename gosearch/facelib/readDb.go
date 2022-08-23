@@ -3,11 +3,11 @@ package facelib
 import (
 	"context"
 	"log"
-	"time"
+	"fmt"
 	"strings"
 	"io/ioutil"
 	"strconv"
-	"go.mongodb.org/mongo-driver/mongo"
+	//"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/bson"
@@ -33,20 +33,19 @@ var (
 	//N int = 0 // 脸特征总数
 )
 
-func ReadData(groupStr string){
+func ReadData(groupStr string) error {
 	log.Printf("GONUM= %d\tLimitFace= %d\n", GONUM, LimitFace)
 
-	// Replace the uri string with your MongoDB deployment's connection string.
-	uri := "mongodb://127.0.0.1:27017/"
+	/*
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	credential := options.Credential{
-		Username: "ipcam",
-		Password: "ipcam",
+		Username: MongoUser,
+		Password: MongoPwd,
 		AuthSource: "face_db",
 	}
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI(uri).SetAuth(credential))
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI(MongoURL).SetAuth(credential))
 	if err != nil {
 		panic(err)
 	}
@@ -55,13 +54,18 @@ func ReadData(groupStr string){
 			panic(err)
 		}
 	}()
+	*/
+
+	if !Ping() {
+		return fmt.Errorf("DB connection problem.")
+	}
 
 	/*
 		取特征数据
 		1. 去指定group的用户
 		2. 每个用户，取人脸特征
 	*/
-	database := client.Database("face_db")
+	database := Client.Database("face_db")
 	collUsers := database.Collection("users")
 	collFaces := database.Collection("faces")
 
@@ -194,7 +198,7 @@ func ReadData(groupStr string){
 		}
 	}
 
-
+	return nil
 }
 
 // 新增特征，只在内存新增，不处理数据库

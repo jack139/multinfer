@@ -69,4 +69,7 @@ Customer: { # 以下 key-value 为用户自定义使用
     "FACE_LimitFace" : "3", # gosearch参数 limit faces to register
     "FACE_GroupIdList": "DEFAULT", # gosearch参数 group_id list，逗号分隔多个groupid
     "FACE_Gonum": "8", # gosearch参数: go routinue 并发数
+    "FACE_mongo_uri" : "mongodb://127.0.0.1:27017/",
+    "FACE_mongo_user" : "ipcam",
+    "FACE_mongo_pwd" : "ipcam",
 }

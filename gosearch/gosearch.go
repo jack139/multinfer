@@ -2,6 +2,7 @@ package gosearch
 
 import (
 	"log"
+	"errors"
 	"strconv"
 
 	"github.com/jack139/go-infer/helper"
@@ -14,8 +15,21 @@ var (
 )
 
 func LoadFaceData() error {
+	// DB 链接 参数
+	facelib.MongoURL = helper.Settings.Customer["FACE_mongo_uri"]
+	facelib.MongoUser = helper.Settings.Customer["FACE_mongo_user"]
+	facelib.MongoPwd = helper.Settings.Customer["FACE_mongo_pwd"]
+
+	// 链接数据库
+	if !facelib.ConnectDb() {
+		panic(errors.New("Connect DB fail!"))
+	}
+
 	// 读取特征数据
-	facelib.ReadData(helper.Settings.Customer["FACE_GroupIdList"])
+	err := facelib.ReadData(helper.Settings.Customer["FACE_GroupIdList"])
+	if err != nil {
+		return err
+	}
 
 	// 初始化参数
 	value, err := strconv.ParseFloat(helper.Settings.Customer["FACE_DistanceThreshold"], 32)
