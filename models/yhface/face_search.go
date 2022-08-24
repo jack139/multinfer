@@ -94,7 +94,7 @@ func (x *FaceSearch) Infer(requestId string, reqData *map[string]interface{}) (*
 	}
 
 	// 模型推理
-	feat, code, err := featuresInfer(image)
+	feat, box, code, err := featuresInfer(image)
 	if err != nil {
 		return &map[string]interface{}{"code":code}, err
 	}
@@ -133,13 +133,31 @@ func (x *FaceSearch) Infer(requestId string, reqData *map[string]interface{}) (*
 
 	err = collUsers.FindOne(context.Background(), bson.D{
 		{"group_id", groupId}, 
-		{"user_id", (*r)["label"].(string)},
+		{"user_id", (*r)["label"].(string) },
 	}, &opt).Decode(&result)
 	if err != nil { 
 		return &map[string]interface{}{"code":9009}, err
 	}
 
-	log.Printf("%v", result)
+	//log.Printf("%v", result)
 
-	return &map[string]interface{}{"result":r}, nil
+	// 取电话号码后4位
+	mtail := result["mobile"].(string)
+	if len(mtail)>4 {
+		mtail = mtail[len(mtail)-4:]
+	}
+
+	// 返回结果
+	return &map[string]interface{}{ "user_list" : []map[string]interface{}{
+			map[string]interface{}{
+				"user_id":     (*r)["label"].(string),
+				"mobile_tail": mtail,
+				"name":        result["name"].(string),
+				"gender":      result["gender"].(int32),
+				"age":         result["age"].(int32),
+				"location":    box[:4],
+				"score":       (*r)["score"].(float32) /2 + 0.5, // 结果 在 [0,1] 之间
+			},
+		},
+	}, nil
 }
