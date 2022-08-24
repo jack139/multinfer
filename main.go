@@ -60,6 +60,8 @@ func preRun(cmd *cobra.Command, args []string) error {
 		types.ModelList = append(types.ModelList, &yhface.FaceCheck{})
 		types.ModelList = append(types.ModelList, &yhface.FaceVerify{})
 		types.ModelList = append(types.ModelList, &yhface.FaceSearch{})
+		types.ModelList = append(types.ModelList, &yhface.FaceFeatures{})
+		types.ModelList = append(types.ModelList, &yhface.FaceMemory{})
 	}
 
 	return nil
