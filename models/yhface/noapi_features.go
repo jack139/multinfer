@@ -24,7 +24,7 @@ func (x *FaceFeatures) Init() error {
 }
 
 func (x *FaceFeatures) ApiPath() string {
-	return "/private/face2/features"
+	return "__noapi__/features"
 }
 
 func (x *FaceFeatures) ApiEntry(reqData *map[string]interface{}) (*map[string]interface{}, error) {

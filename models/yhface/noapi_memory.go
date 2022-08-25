@@ -15,7 +15,7 @@ func (x *FaceMemory) Init() error {
 }
 
 func (x *FaceMemory) ApiPath() string {
-	return "/private/face2/memory"
+	return "__noapi__/memory"
 }
 
 func (x *FaceMemory) ApiEntry(reqData *map[string]interface{}) (*map[string]interface{}, error) {
@@ -37,7 +37,6 @@ func (x *FaceMemory) Infer(requestId string, reqData *map[string]interface{}) (*
 	action := (*reqData)["action"].(string)
 	//data := (*reqData)["data"].([]float32)
 
-	//log.Println(data)
 	log.Println(action, groupId, label)
 
 	switch action {
