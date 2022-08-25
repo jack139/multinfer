@@ -35,14 +35,14 @@ func (x *FaceMemory) Infer(requestId string, reqData *map[string]interface{}) (*
 	groupId := (*reqData)["group_id"].(string)
 	label := (*reqData)["label"].(string)
 	action := (*reqData)["action"].(string)
-	data := (*reqData)["data"].([]float32)
+	//data := (*reqData)["data"].([]float32)
 
-	log.Println(data)
+	//log.Println(data)
 	log.Println(action, groupId, label)
 
 	switch action {
-	case "add":
-		gosearch.Add(groupId, label, data)
+	//case "add":
+	//	gosearch.Add(groupId, label, data)
 
 	case "remove":
 		gosearch.Remove(groupId, label)

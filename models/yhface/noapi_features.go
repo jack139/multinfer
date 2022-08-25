@@ -1,12 +1,19 @@
 package yhface
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"strconv"
 	"encoding/base64"
 
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"github.com/jack139/go-infer/helper"
+
+	"multinfer/gosearch"
+	"multinfer/gosearch/facelib"
 )
 
 /*  定义模型相关参数和方法  */
@@ -35,6 +42,9 @@ func (x *FaceFeatures) Infer(requestId string, reqData *map[string]interface{}) 
 	log.Println("Infer_FaceFeatures")
 
 	imageBase64 := (*reqData)["image"].(string)
+	groupId := (*reqData)["group_id"].(string)
+	userId := (*reqData)["user_id"].(string)
+	faceId := (*reqData)["face_id"].(string)
 
 	// 解码base64
 	image, err  := base64.StdEncoding.DecodeString(imageBase64)
@@ -67,5 +77,38 @@ func (x *FaceFeatures) Infer(requestId string, reqData *map[string]interface{}) 
 	// 保存请求图片和结果
 	saveBackLog(requestId, image, []byte(fmt.Sprintf("%v", feat[:10])))
 
-	return &map[string]interface{}{"features":feat}, nil
+
+	// 更新到内存
+	gosearch.Add(groupId, userId, feat)
+
+	// 更新到DB
+
+	// 检测数据库连接
+	if !facelib.Ping() {
+		return &map[string]interface{}{"code":9008}, fmt.Errorf("DB connection problem.")
+	}
+
+	// 更新人脸信息
+	database := facelib.Client.Database("face_db")
+	collFace := database.Collection("faces")
+
+	opts := options.Update().SetUpsert(false)
+	objID, _ := primitive.ObjectIDFromHex(faceId)
+	filter := bson.D{{"_id", objID}}
+	update := bson.M{ "$set": bson.M{ 
+			"encodings": bson.M{ 
+				"arc": bson.M{ 
+					"None": feat,
+				},
+			},
+		},
+	}
+
+	_, err = collFace.UpdateOne(context.Background(), filter, update, opts)
+	if err != nil {
+		return &map[string]interface{}{"code":9009}, err
+	}
+
+	// 未返回全部特征值，只为区别于 nil
+	return &map[string]interface{}{"features":feat[:10]}, nil 
 }
