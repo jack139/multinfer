@@ -82,8 +82,6 @@ func ReadData(groupStr string) error {
 			faceList = append(faceList, user["face_list"].(primitive.A))
 		}
 
-		cur.Close(context.Background())
-
 		// 读取每个用户的 人脸特征
 		var opt options.FindOneOptions
 		opt.SetProjection(bson.M{"encodings": 1})

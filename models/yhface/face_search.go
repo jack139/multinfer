@@ -4,15 +4,10 @@ import (
 	"fmt"
 	"log"
 	"strconv"
-	"context"
+
 	"encoding/base64"
 
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo/options"
 	"github.com/jack139/go-infer/helper"
-
-	"multinfer/gosearch"
-	"multinfer/gosearch/facelib"
 )
 
 /*  定义模型相关参数和方法  */
@@ -36,7 +31,6 @@ func (x *FaceSearch) ApiEntry(reqData *map[string]interface{}) (*map[string]inte
 	}
 
 	var groupId, userId, mobileTail string
-	var maxUser float64
 
 	groupId, ok = (*reqData)["group_id"].(string)
 	if !ok {
@@ -51,11 +45,11 @@ func (x *FaceSearch) ApiEntry(reqData *map[string]interface{}) (*map[string]inte
 	mobileTail, ok = (*reqData)["mobile_tail"].(string)
 	if !ok {
 		mobileTail = ""
-	}
-
-	maxUser, ok = (*reqData)["max_user_num"].(float64)
-	if !ok {
-		maxUser = 5
+	} else {
+		if len(mobileTail)>4 {
+			// 只保留后4位
+			mobileTail = mobileTail[len(mobileTail)-4:]
+		}
 	}
 
 	// 构建请求参数
@@ -64,7 +58,6 @@ func (x *FaceSearch) ApiEntry(reqData *map[string]interface{}) (*map[string]inte
 		"group_id" : groupId,
 		"user_id" : userId,
 		"mobile_tail" : mobileTail,
-		"max_user_num" : maxUser,
 	}
 
 	return &reqDataMap, nil
@@ -77,9 +70,8 @@ func (x *FaceSearch) Infer(requestId string, reqData *map[string]interface{}) (*
 
 	imageBase64 := (*reqData)["image"].(string)
 	groupId := (*reqData)["group_id"].(string)
-	//userId := (*reqData)["user_id"].(string)
-	//mobileTail := (*reqData)["mobile_tail"].(string)
-	//maxUser := (*reqData)["max_user_num"].(float64)
+	userId := (*reqData)["user_id"].(string)
+	mobileTail := (*reqData)["mobile_tail"].(string)
 
 	// 解码base64
 	image, err  := base64.StdEncoding.DecodeString(imageBase64)
@@ -93,71 +85,15 @@ func (x *FaceSearch) Infer(requestId string, reqData *map[string]interface{}) (*
 		return &map[string]interface{}{"code":9002}, fmt.Errorf("图片数据太大")
 	}
 
-	// 模型推理
-	feat, box, code, err := featuresInfer(image)
-	if err != nil {
-		return &map[string]interface{}{"code":code}, err
+	if userId=="" && mobileTail=="" { // 1:N
+		log.Println("search 1:N")
+		return search_1_N(requestId, groupId, image)
+	} else if userId=="" { // 双因素识别: 人脸+手机号后4位
+		log.Println("search 1:mobile_tail")
+		return search_1_mobile(requestId, groupId, mobileTail, image)
+	} else { // 1:1
+		log.Println("search 1:1")
+		return search_1_1(requestId, groupId, userId, image)
 	}
 
-	if feat==nil {  // 未检测到人脸
-		return &map[string]interface{}{"user_list":[]int{}}, nil
-	}
-
-	// 正则化
-	feat, err = norm(feat)
-	if err != nil {
-		return &map[string]interface{}{"code":9005}, err
-	}
-
-	r := gosearch.Search(groupId, feat)
-
-	// 保存请求图片和结果
-	saveBackLog(requestId, image, []byte(fmt.Sprintf("%v", r)))
-
-	if r==nil { // 未识别到 label
-		return &map[string]interface{}{"user_list":[]int{}}, nil
-	}
-
-	// 检测数据库连接
-	if !facelib.Ping() {
-		return &map[string]interface{}{"code":9008}, fmt.Errorf("DB connection problem.")
-	}
-
-	// 获取用户信息
-	database := facelib.Client.Database("face_db")
-	collUsers := database.Collection("users")
-
-	var result bson.M
-	var opt options.FindOneOptions
-	opt.SetProjection(bson.M{"mobile":1, "name":1, "gender":1, "age":1, "_id":0})
-
-	err = collUsers.FindOne(context.Background(), bson.D{
-		{"group_id", groupId}, 
-		{"user_id", (*r)["label"].(string) },
-	}, &opt).Decode(&result)
-	if err != nil { 
-		return &map[string]interface{}{"code":9009}, err
-	}
-
-	//log.Printf("%v", result)
-
-	// 取电话号码后4位
-	mtail := result["mobile"].(string)
-	if len(mtail)>4 {
-		mtail = mtail[len(mtail)-4:]
-	}
-
-	// 返回结果
-	return &map[string]interface{}{ "user_list" : []map[string]interface{}{
-			map[string]interface{}{
-				"user_id":     (*r)["label"].(string),
-				"mobile_tail": mtail,
-				"name":        result["name"].(string),
-				"gender":      result["gender"].(int32),
-				"age":         result["age"].(int32),
-				"location":    box[:4],
-				"score":       (*r)["score"].(float32) /2 + 0.5, // 结果 在 [0,1] 之间
-			},
-		},
-	}, nil
 }

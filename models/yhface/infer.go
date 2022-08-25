@@ -1,17 +1,25 @@
 package yhface
 
 import (
+	"context"
 	"log"
 	"fmt"
 	"bytes"
 	"io/ioutil"
 
 	"github.com/disintegration/imaging"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"github.com/jack139/go-infer/helper"
 	"github.com/jack139/arcface-go/arcface"
 
 	"multinfer/gosearch"
+	"multinfer/gosearch/facelib"
 )
+
+const vecLen = 512 // 特征向量长度
 
 /* 训练好的模型权重 */
 var (
@@ -39,7 +47,7 @@ func initModel() error {
 		initOK = true
 
 		// 模型热身
-		//warmup(helper.Settings.Customer["FACE_WARM_UP_IMAGES"])
+		warmup(helper.Settings.Customer["FACE_WARM_UP_IMAGES"])
 	}
 
 	return nil
@@ -110,11 +118,289 @@ func warmup(path string){
 		image, err := ioutil.ReadFile(fmt.Sprintf("%s/%s", path, file.Name()))
 		if err != nil { continue }
 
-		r, _, err := locateInfer(image)
+		r, r2, _, err := featuresInfer(image)
 		if err==nil {
-			log.Printf("warmup: %s %s", file.Name(), r)
+			log.Printf("warmup: %s %v %v", file.Name(), len(r), len(r2))
 		} else {
 			log.Printf("warmup fail: %s %s", file.Name(), err.Error())
 		}
 	}
+}
+
+// 1:N
+func search_1_N(requestId, groupId string, image []byte) (*map[string]interface{}, error) {
+	// 模型推理
+	feat, box, code, err := featuresInfer(image)
+	if err != nil {
+		return &map[string]interface{}{"code":code}, err
+	}
+
+	if feat==nil {  // 未检测到人脸
+		return &map[string]interface{}{"user_list":[]int{}}, nil
+	}
+
+	// 正则化
+	feat, err = norm(feat)
+	if err != nil {
+		return &map[string]interface{}{"code":9005}, err
+	}
+
+	r := gosearch.Search(groupId, feat)
+
+	// 保存请求图片和结果
+	saveBackLog(requestId, image, []byte(fmt.Sprintf("%v", r)))
+
+	if r==nil { // 未识别到 label
+		return &map[string]interface{}{"user_list":[]int{}}, nil
+	}
+
+	// 检测数据库连接
+	if !facelib.Ping() {
+		return &map[string]interface{}{"code":9008}, fmt.Errorf("DB connection problem.")
+	}
+
+	// 获取用户信息
+	database := facelib.Client.Database("face_db")
+	collUsers := database.Collection("users")
+
+	var result bson.M
+	var opt options.FindOneOptions
+	opt.SetProjection(bson.M{"mobile":1, "name":1, "_id":0})
+
+	err = collUsers.FindOne(context.Background(), bson.D{
+		{"group_id", groupId}, 
+		{"user_id", (*r)["label"].(string) },
+	}, &opt).Decode(&result)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return &map[string]interface{}{"code":9006}, fmt.Errorf("user_id not found")
+		} else {
+			return &map[string]interface{}{"code":9009}, err
+		}
+	}
+
+	//log.Printf("%v", result)
+
+	// 取电话号码后4位
+	mtail := result["mobile"].(string)
+	if len(mtail)>4 {
+		mtail = mtail[len(mtail)-4:]
+	}
+
+	// 返回结果
+	return &map[string]interface{}{ "user_list" : []map[string]interface{}{
+			map[string]interface{}{
+				"user_id":     (*r)["label"].(string),
+				"mobile_tail": mtail,
+				"name":        result["name"].(string),
+				"location":    box[:4],
+				"score":       (*r)["score"].(float32) /2 + 0.5, // 结果 在 [0,1] 之间
+			},
+		},
+	}, nil
+}
+
+// 1:1
+func search_1_1(requestId, groupId, userId string, image []byte) (*map[string]interface{}, error) {
+	// 模型推理
+	feat, box, code, err := featuresInfer(image)
+	if err != nil {
+		return &map[string]interface{}{"code":code}, err
+	}
+
+	if feat==nil {  // 未检测到人脸
+		return &map[string]interface{}{"is_match":false, "score":0}, nil
+	}
+
+	// 正则化
+	feat, err = norm(feat)
+	if err != nil {
+		return &map[string]interface{}{"code":9005}, err
+	}
+
+	// 检测数据库连接
+	if !facelib.Ping() {
+		return &map[string]interface{}{"code":9008}, fmt.Errorf("DB connection problem.")
+	}
+
+	// 获取用户信息
+	database := facelib.Client.Database("face_db")
+	collUsers := database.Collection("users")
+	collFaces := database.Collection("faces")
+
+	var user bson.M
+	var opt options.FindOneOptions
+	opt.SetProjection(bson.M{"face_list":1, "_id":0})
+
+	err = collUsers.FindOne(context.Background(), bson.D{
+		{"group_id", groupId}, 
+		{"user_id", userId },
+	}, &opt).Decode(&user)
+	if err != nil { 
+		if err == mongo.ErrNoDocuments {
+			return &map[string]interface{}{"code":9006}, fmt.Errorf("user_id not found")
+		} else {
+			return &map[string]interface{}{"code":9009}, err
+		}
+	}
+
+	// 匹配 face_list
+	_, score := is_match(collFaces, feat, user["face_list"].(primitive.A))
+
+	if score<gosearch.ThreshHold {
+		// 匹配到
+		return &map[string]interface{}{
+			"is_match" : true,
+			"score"    : score / 2 + 0.5,
+			"location" : box[:4],
+		}, nil
+	} else {
+		// 未匹配到
+		return &map[string]interface{}{"is_match":false, "score":0}, nil
+	}
+}
+
+
+// 双因素：人脸 + 号码厚4位
+func search_1_mobile(requestId, groupId, mobileTail string, image []byte) (*map[string]interface{}, error) {
+	// 模型推理
+	feat, box, code, err := featuresInfer(image)
+	if err != nil {
+		return &map[string]interface{}{"code":code}, err
+	}
+
+	if feat==nil {  // 未检测到人脸
+		return &map[string]interface{}{"is_match":false, "score":0}, nil
+	}
+
+	// 正则化
+	feat, err = norm(feat)
+	if err != nil {
+		return &map[string]interface{}{"code":9005}, err
+	}
+
+	// 检测数据库连接
+	if !facelib.Ping() {
+		return &map[string]interface{}{"code":9008}, fmt.Errorf("DB connection problem.")
+	}
+
+	// 获取用户信息
+	database := facelib.Client.Database("face_db")
+	collUsers := database.Collection("users")
+	collFaces := database.Collection("faces")
+
+	//var user bson.M
+	var opt options.FindOptions
+	opt.SetProjection(bson.M{"face_list":1, "user_id":1, "name":1, "_id":0})
+
+	// 读取用户列表
+	cur, err := collUsers.Find(context.Background(), bson.D{
+		{"group_id", groupId},
+		{"mobile", bson.D{ {"$regex", mobileTail+"$"} } },
+	}, &opt)
+	if err != nil { 
+		return &map[string]interface{}{"code":9009}, err
+	}
+	defer cur.Close(context.Background())
+
+	// 人脸的 _id 列表
+	var faceList primitive.A
+	var labelName []string
+	var userName []string
+
+	// 输出数据
+	for cur.Next(context.Background()) {
+		var user bson.M
+		if err = cur.Decode(&user); err != nil {
+			log.Println("Fetch group data fail: ", err)
+			continue
+		}
+
+		for _, item := range user["face_list"].(primitive.A){
+			labelName = append(labelName, user["user_id"].(string))
+			userName = append(labelName, user["name"].(string))
+			faceList = append(faceList, item)
+		}
+	}
+
+	// 匹配 face_list
+	pos, score := is_match(collFaces, feat, faceList)
+
+	if score<gosearch.ThreshHold {
+		// 匹配到
+		return &map[string]interface{}{ "user_list" : []map[string]interface{}{
+				map[string]interface{}{
+					"user_id"  : labelName[pos],
+					"name"     : userName[pos],
+					"score"    : score / 2 + 0.5,
+					"location" : box[:4],
+				},
+			},
+		}, nil
+	} else {
+		// 未匹配到
+		return &map[string]interface{}{"user_list":[]int{}}, nil
+	}
+}
+
+
+// 在 face_list 里比较，匹配最近的一个（score最小的）
+func is_match(collFaces *mongo.Collection, feat []float32, face_list primitive.A) (pos int, best float32){
+	var opt options.FindOneOptions
+	opt.SetProjection(bson.M{"encodings":1, "_id":0})
+
+	best = 1 // 不匹配
+
+	for n, item := range face_list {
+		var result bson.M
+		objID, _ := primitive.ObjectIDFromHex(item.(string))
+		err := collFaces.FindOne(context.Background(), bson.M{"_id": objID}, &opt).Decode(&result)
+		if err != nil { 
+			log.Println("Find face fail: ", err)
+			continue
+		}
+		//log.Println(result["encodings"].(bson.M)["arc"].(bson.M)["None"].(primitive.A))
+
+		// 获取特征
+		encodings, ok := result["encodings"].(bson.M)
+		if !ok {
+			log.Println("encodings err: ", item)
+			continue
+		}
+
+		vec2 := make([]float32, vecLen)
+
+		// 装入 arcface 特征
+		arc, ok := encodings["arc"].(bson.M)
+		if !ok {
+			log.Println("arc encodings err: ", item)
+			continue
+		}
+
+		// 只取 None 人脸特征
+		arcNon, ok := arc["None"].(primitive.A)
+		if !ok {
+			log.Println("arcNone encodings err: ", item)
+			continue
+		}
+
+		for i := range arcNon {
+			vec2[i] = float32(arcNon[i].(float64))
+		}
+
+		// 计算 余弦相似度
+		score, err := cosine(feat, vec2)
+		if err != nil {
+			log.Println("calc cosine fail: ", err)
+			continue
+		}
+
+		if float32(score)<gosearch.ThreshHold {
+			// 匹配到
+			pos = n
+			best = float32(score)
+		}
+	}
+
+	return
 }

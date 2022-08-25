@@ -95,6 +95,8 @@ if __name__ == '__main__':
         with open(filepath, 'rb') as f:
             img_data = f.read()
         body['data']['image'] = base64.b64encode(img_data).decode('utf-8')
+        #body['data']['user_id'] = 'obama'
+        #body['data']['mobile_tail'] = '14665'
     else: # detpos
         url = host+'/antigen/check'
         with open(filepath, 'rb') as f:
