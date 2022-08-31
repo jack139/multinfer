@@ -59,7 +59,7 @@ func (x *FaceFeatures) Infer(requestId string, reqData *map[string]interface{}) 
 	}
 
 	// 模型推理
-	feat, _, code, err := featuresInfer(image)
+	feat, _, _, code, err := featuresInfer(image)
 	if err != nil {
 		return &map[string]interface{}{"code":code}, err
 	}

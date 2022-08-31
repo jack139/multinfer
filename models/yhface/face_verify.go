@@ -74,7 +74,7 @@ func (x *FaceVerify) Infer(requestId string, reqData *map[string]interface{}) (*
 	}
 
 	// 模型推理
-	r1, _, code, err := featuresInfer(image1)
+	r1, _, _, code, err := featuresInfer(image1)
 	if err != nil {
 		return &map[string]interface{}{"code":code}, err
 	}
@@ -83,7 +83,7 @@ func (x *FaceVerify) Infer(requestId string, reqData *map[string]interface{}) (*
 		return &map[string]interface{}{"is_match":false, "score":0.0}, nil
 	}
 
-	r2, _, code, err := featuresInfer(image2)
+	r2, _, _, code, err := featuresInfer(image2)
 	if err != nil {
 		return &map[string]interface{}{"code":code}, err
 	}

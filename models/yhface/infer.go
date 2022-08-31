@@ -5,6 +5,7 @@ import (
 	"log"
 	"fmt"
 	"bytes"
+	"image"
 	"io/ioutil"
 
 	"github.com/disintegration/imaging"
@@ -79,34 +80,34 @@ func locateInfer(imageByte []byte) ([][]float32, int, error){
 }
 
 
-func featuresInfer(imageByte []byte) ([]float32, []float32, int, error){
+func featuresInfer(imageByte []byte) ([]float32, []float32, image.Image, int, error){
 
 	// 转换为 image.Image
 	reader := bytes.NewReader(imageByte)
 
 	img, err := imaging.Decode(reader)
 	if err!=nil {
-		return nil, nil, 9201,err
+		return nil, nil, nil, 9201, err
 	}
 
 	// 检测人脸
 	dets, kpss, err := arcface.FaceDetect(img)
 	if err != nil {
-		return nil, nil, 9202, err
+		return nil, nil, nil, 9202, err
 	}
 
 	if len(dets)==0 {
 		log.Println("No face detected.")
-		return nil, nil, 0, nil
+		return nil, nil, nil, 0, nil
 	}
 
 	// 只返回第一个人脸的特征
-	features, err := arcface.FaceFeatures(img, kpss[0])
+	features, cropFace, err := arcface.FaceFeatures(img, kpss[0])
 	if err != nil {
-		return nil, nil, 9203, err
+		return nil, nil, nil, 9203, err
 	}
 
-	return features, dets[0], 0, nil
+	return features, dets[0], cropFace, 0, nil
 }
 
 // 模型热身
@@ -120,10 +121,10 @@ func warmup(path string){
 	for _, file := range files {
 		if file.IsDir() { continue }
 	
-		image, err := ioutil.ReadFile(fmt.Sprintf("%s/%s", path, file.Name()))
+		img, err := ioutil.ReadFile(fmt.Sprintf("%s/%s", path, file.Name()))
 		if err != nil { continue }
 
-		r, r2, _, err := featuresInfer(image)
+		r, r2, _, _, err := featuresInfer(img)
 		if err==nil {
 			log.Printf("warmup: %s %v %v", file.Name(), len(r), len(r2))
 		} else {
@@ -133,9 +134,9 @@ func warmup(path string){
 }
 
 // 1:N
-func search_1_N(requestId, groupId string, image []byte) (*map[string]interface{}, error) {
+func search_1_N(requestId, groupId string, img []byte) (*map[string]interface{}, error) {
 	// 模型推理
-	feat, box, code, err := featuresInfer(image)
+	feat, box, _, code, err := featuresInfer(img)
 	if err != nil {
 		return &map[string]interface{}{"code":code}, err
 	}
@@ -153,7 +154,7 @@ func search_1_N(requestId, groupId string, image []byte) (*map[string]interface{
 	r := gosearch.Search(groupId, feat)
 
 	// 保存请求图片和结果
-	saveBackLog(requestId, image, []byte(fmt.Sprintf("%v", r)))
+	saveBackLog(requestId, img, []byte(fmt.Sprintf("%v", r)))
 
 	if r==nil { // 未识别到 label
 		return &map[string]interface{}{"user_list":[]int{}}, nil
@@ -206,9 +207,9 @@ func search_1_N(requestId, groupId string, image []byte) (*map[string]interface{
 }
 
 // 1:1
-func search_1_1(requestId, groupId, userId string, image []byte) (*map[string]interface{}, error) {
+func search_1_1(requestId, groupId, userId string, img []byte) (*map[string]interface{}, error) {
 	// 模型推理
-	feat, box, code, err := featuresInfer(image)
+	feat, box, _, code, err := featuresInfer(img)
 	if err != nil {
 		return &map[string]interface{}{"code":code}, err
 	}
@@ -267,9 +268,9 @@ func search_1_1(requestId, groupId, userId string, image []byte) (*map[string]in
 
 
 // 双因素：人脸 + 号码厚4位
-func search_1_mobile(requestId, groupId, mobileTail string, image []byte) (*map[string]interface{}, error) {
+func search_1_mobile(requestId, groupId, mobileTail string, img []byte) (*map[string]interface{}, error) {
 	// 模型推理
-	feat, box, code, err := featuresInfer(image)
+	feat, box, _, code, err := featuresInfer(img)
 	if err != nil {
 		return &map[string]interface{}{"code":code}, err
 	}
