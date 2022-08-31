@@ -7,7 +7,7 @@ import (
 	"encoding/base64"
 
 	"github.com/jack139/go-infer/helper"
-	"multinfer/gosearch"
+	"multinfer/models/yhface/gosearch"
 )
 
 /*  定义模型相关参数和方法  */

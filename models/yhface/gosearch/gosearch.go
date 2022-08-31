@@ -7,7 +7,7 @@ import (
 
 	"github.com/jack139/go-infer/helper"
 
-	"multinfer/gosearch/facelib"
+	"multinfer/models/yhface/gosearch/facelib"
 )
 
 var (

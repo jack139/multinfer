@@ -15,8 +15,9 @@ import (
 	"github.com/jack139/go-infer/helper"
 	"github.com/jack139/arcface-go/arcface"
 
-	"multinfer/gosearch"
-	"multinfer/gosearch/facelib"
+	"multinfer/models/yhface/gosearch"
+	"multinfer/models/yhface/gosearch/facelib"
+	"multinfer/models/yhface/fas2"
 )
 
 const vecLen = 512 // 特征向量长度
@@ -34,8 +35,12 @@ func initModel() error {
 		if err = arcface.LoadOnnxModel(helper.Settings.Customer["ArcfaceModelPath"]); err!=nil {
 			return err
 		}
+		log.Println("Arcface onnx model loaded from: ", helper.Settings.Customer["ArcfaceModelPath"])
 
-		log.Println("Onnx model loaded from: ", helper.Settings.Customer["ArcfaceModelPath"])
+		if err = fas2.LoadOnnxModel(helper.Settings.Customer["Fas2ModelPath"]); err!=nil {
+			return err
+		}
+		log.Println("FAS onnx model loaded from: ", helper.Settings.Customer["Fas2ModelPath"])
 
 
 		// 人脸库装入内存

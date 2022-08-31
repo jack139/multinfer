@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	"multinfer/gosearch"
+	"multinfer/models/yhface/gosearch"
 )
 
 /*  定义模型相关参数和方法  */

@@ -12,8 +12,8 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"github.com/jack139/go-infer/helper"
 
-	"multinfer/gosearch"
-	"multinfer/gosearch/facelib"
+	"multinfer/models/yhface/gosearch"
+	"multinfer/models/yhface/gosearch/facelib"
 )
 
 /*  定义模型相关参数和方法  */
