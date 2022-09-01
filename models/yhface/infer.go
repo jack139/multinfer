@@ -102,12 +102,12 @@ func featuresInfer(imageByte []byte) ([]float32, []float32, image.Image, int, er
 	}
 
 	// 只返回第一个人脸的特征
-	features, cropFace, err := arcface.FaceFeatures(img, kpss[0])
+	features, normFace, err := arcface.FaceFeatures(img, kpss[0])
 	if err != nil {
 		return nil, nil, nil, 9203, err
 	}
 
-	return features, dets[0], cropFace, 0, nil
+	return features, dets[0], normFace, 0, nil
 }
 
 // 模型热身
@@ -136,7 +136,7 @@ func warmup(path string){
 // 1:N
 func search_1_N(requestId, groupId string, img []byte) (*map[string]interface{}, error) {
 	// 模型推理
-	feat, box, _, code, err := featuresInfer(img)
+	feat, box, normFace, code, err := featuresInfer(img)
 	if err != nil {
 		return &map[string]interface{}{"code":code}, err
 	}
@@ -153,8 +153,14 @@ func search_1_N(requestId, groupId string, img []byte) (*map[string]interface{},
 
 	r := gosearch.Search(groupId, feat)
 
+	// FAS 检查
+	isReal, realScore, err := fas2.FasCheck(normFace)
+	if err != nil {
+		return &map[string]interface{}{"code":9007}, err
+	}
+
 	// 保存请求图片和结果
-	saveBackLog(requestId, img, []byte(fmt.Sprintf("%v", r)))
+	saveBackLog(requestId, img, []byte(fmt.Sprintf("%v %v %v", r, isReal, realScore)))
 
 	if r==nil { // 未识别到 label
 		return &map[string]interface{}{"user_list":[]int{}}, nil
@@ -201,6 +207,7 @@ func search_1_N(requestId, groupId string, img []byte) (*map[string]interface{},
 				"name":        result["name"].(string),
 				"location":    box[:4],
 				"score":       (*r)["score"].(float32) /2 + 0.5, // 结果 在 [0,1] 之间
+				"fake":        []interface{}{!isReal, realScore},
 			},
 		},
 	}, nil

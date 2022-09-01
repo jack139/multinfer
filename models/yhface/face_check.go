@@ -7,6 +7,8 @@ import (
 	"encoding/base64"
 
 	"github.com/jack139/go-infer/helper"
+
+	"multinfer/models/yhface/fas2"
 )
 
 /*  定义模型相关参数和方法  */
@@ -57,15 +59,29 @@ func (x *FaceCheck) Infer(requestId string, reqData *map[string]interface{}) (*m
 	}
 
 	// 模型推理
-	r, code, err := locateInfer(image)
+	feat, box, normFace, code, err := featuresInfer(image)
 	if err != nil {
 		return &map[string]interface{}{"code":code}, err
 	}
 
-	log.Println("face num--> ", len(r))
+	if feat==nil {  // 未检测到人脸
+		// 保存请求图片和结果
+		saveBackLog(requestId, image, []byte(fmt.Sprintf("%v", box)))
+
+		return &map[string]interface{}{"has_face": false}, nil
+	}
+
+	// FAS 检查
+	isReal, realScore, err := fas2.FasCheck(normFace)
+	if err != nil {
+		return &map[string]interface{}{"code":9007}, err
+	}
 
 	// 保存请求图片和结果
-	saveBackLog(requestId, image, []byte(fmt.Sprintf("%v", r)))
+	saveBackLog(requestId, image, []byte(fmt.Sprintf("%v %v %v", box, isReal, realScore)))
 
-	return &map[string]interface{}{"has_face": len(r)>0}, nil
+	return &map[string]interface{}{
+		"has_face": true,
+		"fake":     []interface{}{!isReal, realScore},
+	}, nil
 }

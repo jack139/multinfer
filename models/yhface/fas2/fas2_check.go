@@ -19,12 +19,11 @@ var (
 )
 
 
-
+// 返回 live == true 真脸 false 假脸， score 真脸的得分
 func FasCheck(src image.Image) (live bool, score float32, err error) {
 	shape1 := []int64{1, 3, fas_model_input_size, fas_model_input_size}
 	input1 := preprocessImage(src, fas_model_input_size)
 
-	//log.Println(input1[:100])
 
 	// 模型1 检测
 	res, err := fas2Model1.Predict([]onnxruntime.TensorValue{
@@ -42,12 +41,8 @@ func FasCheck(src image.Image) (live bool, score float32, err error) {
 		return
 	}
 
-	predictionA1 := res[0].Value.([]float32)
-	predictionB1 := softmax(predictionA1)
-
-	log.Println("predictionA1:", predictionA1)
-	log.Println("predictionB1:", predictionB1)
-
+	predictionA := res[0].Value.([]float32)
+	predictionB := softmax(predictionA)
 
 
 	// 模型2 检测
@@ -66,19 +61,17 @@ func FasCheck(src image.Image) (live bool, score float32, err error) {
 		return
 	}
 
-	predictionA2 := res2[0].Value.([]float32)
-	predictionB2 := softmax(predictionA2)
+	predictionA = res2[0].Value.([]float32)
+	predictionA = softmax(predictionA)
 
-	log.Println("predictionA2:", predictionA2)
-	log.Println("predictionB2:", predictionB2)
 
-	predictionB1[0] += predictionB2[0]
-	predictionB1[1] += predictionB2[1]
-	predictionB1[2] += predictionB2[2]
+	predictionB[0] += predictionA[0]
+	predictionB[1] += predictionA[1]
+	predictionB[2] += predictionA[2]
 
-	log.Println("Real Score: ", predictionB1 )
+	log.Println("Real Score: ", predictionB )
 
-	return predictionB1[1]>predictionB1[0] && predictionB1[1]>predictionB1[2], predictionB1[1] / 2, nil
+	return predictionB[1]>predictionB[0] && predictionB[1]>predictionB[2], predictionB[1] / 2, nil
 }
 
 
