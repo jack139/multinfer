@@ -60,7 +60,7 @@ func initModel() error {
 }
 
 
-func locateInfer(imageByte []byte) ([][]float32, int, error){
+func locateInfer(imageByte []byte) ([][]int, int, error){
 
 	// 转换为 image.Image
 	reader := bytes.NewReader(imageByte)
@@ -76,11 +76,20 @@ func locateInfer(imageByte []byte) ([][]float32, int, error){
 		return nil, 9202, err
 	}
 
-	return dets, 0, nil
+	// 返回整数结果
+	r2 := make([][]int, len(dets))
+	for i:=0;i<len(dets);i++ {
+		r2[i] = make([]int, 4)
+		for j:=0;j<4;j++ {
+			r2[i][j] = int(dets[i][j])
+		}
+	}
+
+	return r2, 0, nil
 }
 
 
-func featuresInfer(imageByte []byte) ([]float32, []float32, image.Image, int, error){
+func featuresInfer(imageByte []byte) ([]float32, []int, image.Image, int, error){
 
 	// 转换为 image.Image
 	reader := bytes.NewReader(imageByte)
@@ -107,7 +116,13 @@ func featuresInfer(imageByte []byte) ([]float32, []float32, image.Image, int, er
 		return nil, nil, nil, 9203, err
 	}
 
-	return features, dets[0], normFace, 0, nil
+	// 返回整数结果
+	r2 := make([]int, 4)
+	for j:=0;j<4;j++ {
+		r2[j] = int(dets[0][j])
+	}
+
+	return features, r2, normFace, 0, nil
 }
 
 // 模型热身
@@ -207,7 +222,8 @@ func search_1_N(requestId, groupId string, img []byte) (*map[string]interface{},
 				"name":        result["name"].(string),
 				"location":    box[:4],
 				"score":       (*r)["score"].(float32) /2 + 0.5, // 结果 在 [0,1] 之间
-				"fake":        []interface{}{!isReal, realScore},
+				"fake":        !isReal, 
+				"fake_score":  1 - realScore,
 			},
 		},
 	}, nil

@@ -81,7 +81,8 @@ func (x *FaceCheck) Infer(requestId string, reqData *map[string]interface{}) (*m
 	saveBackLog(requestId, image, []byte(fmt.Sprintf("%v %v %v", box, isReal, realScore)))
 
 	return &map[string]interface{}{
-		"has_face": true,
-		"fake":     []interface{}{!isReal, realScore},
+		"has_face":   true,
+		"fake":       !isReal, 
+		"fake_score": 1 - realScore,
 	}, nil
 }
