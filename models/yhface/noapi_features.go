@@ -59,7 +59,7 @@ func (x *FaceFeatures) Infer(requestId string, reqData *map[string]interface{}) 
 	}
 
 	// 模型推理
-	feat, _, _, code, err := featuresInfer(image)
+	feat, _, normFace, code, err := featuresInfer(image)
 	if err != nil {
 		return &map[string]interface{}{"code":code}, err
 	}
@@ -75,7 +75,7 @@ func (x *FaceFeatures) Infer(requestId string, reqData *map[string]interface{}) 
 	}
 
 	// 保存请求图片和结果
-	saveBackLog(requestId, image, []byte(fmt.Sprintf("%v", feat[:10])))
+	saveBackLog(requestId, normFace, []byte(fmt.Sprintf("%v %v", userId, faceId)))
 
 
 	// 更新到内存

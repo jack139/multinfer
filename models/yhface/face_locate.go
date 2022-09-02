@@ -76,7 +76,7 @@ func (x *FaceLocate) Infer(requestId string, reqData *map[string]interface{}) (*
 
 
 	// 保存请求图片和结果
-	saveBackLog(requestId, image, []byte(fmt.Sprintf("%v %v", r, maxFace)))
+	//saveBackLog(requestId, image, []byte(fmt.Sprintf("%v %v", r, maxFace)))
 
 	// 最多返回 maxFace 个数据
 	if len(r) > int(maxFace) {

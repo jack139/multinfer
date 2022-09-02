@@ -98,7 +98,7 @@ func (x *FaceVerify) Infer(requestId string, reqData *map[string]interface{}) (*
 	}
 
 	// 保存请求图片和结果
-	saveBackLog(requestId, image1, []byte(fmt.Sprintf("%v", score)))
+	//saveBackLog(requestId, image1, []byte(fmt.Sprintf("%v", score)))
 
 	return &map[string]interface{}{
 		"is_match" : float32(score)<gosearch.ThreshHold, 

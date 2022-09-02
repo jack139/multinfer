@@ -175,7 +175,7 @@ func search_1_N(requestId, groupId string, img []byte) (*map[string]interface{},
 	}
 
 	// 保存请求图片和结果
-	saveBackLog(requestId, img, []byte(fmt.Sprintf("%v %v %v", r, isReal, realScore)))
+	saveBackLog(requestId, normFace, []byte(fmt.Sprintf("%v %v %v", r, isReal, realScore)))
 
 	if r==nil { // 未识别到 label
 		return &map[string]interface{}{"user_list":[]int{}}, nil
@@ -232,7 +232,7 @@ func search_1_N(requestId, groupId string, img []byte) (*map[string]interface{},
 // 1:1
 func search_1_1(requestId, groupId, userId string, img []byte) (*map[string]interface{}, error) {
 	// 模型推理
-	feat, box, _, code, err := featuresInfer(img)
+	feat, box, normFace, code, err := featuresInfer(img)
 	if err != nil {
 		return &map[string]interface{}{"code":code}, err
 	}
@@ -276,6 +276,9 @@ func search_1_1(requestId, groupId, userId string, img []byte) (*map[string]inte
 	// 匹配 face_list
 	_, score := is_match(collFaces, feat, user["face_list"].(primitive.A))
 
+	// 保存请求图片和结果
+	saveBackLog(requestId, normFace, []byte(fmt.Sprintf("%v", score)))
+
 	if score<gosearch.ThreshHold {
 		// 匹配到
 		return &map[string]interface{}{
@@ -293,7 +296,7 @@ func search_1_1(requestId, groupId, userId string, img []byte) (*map[string]inte
 // 双因素：人脸 + 号码厚4位
 func search_1_mobile(requestId, groupId, mobileTail string, img []byte) (*map[string]interface{}, error) {
 	// 模型推理
-	feat, box, _, code, err := featuresInfer(img)
+	feat, box, normFace, code, err := featuresInfer(img)
 	if err != nil {
 		return &map[string]interface{}{"code":code}, err
 	}
@@ -354,6 +357,9 @@ func search_1_mobile(requestId, groupId, mobileTail string, img []byte) (*map[st
 
 	// 匹配 face_list
 	pos, score := is_match(collFaces, feat, faceList)
+
+	// 保存请求图片和结果
+	saveBackLog(requestId, normFace, []byte(fmt.Sprintf("%v", score)))
 
 	if score<gosearch.ThreshHold {
 		// 匹配到

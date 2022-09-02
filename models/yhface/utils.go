@@ -6,20 +6,21 @@ import (
 	"fmt"
 	"log"
 	"math"
+	"image"
 	"io/ioutil"
-
+	"github.com/disintegration/imaging"
 	"github.com/jack139/go-infer/helper"
 )
 
 // 保存请求图片和结果
-func saveBackLog(requestId string, image, result []byte) {
+func saveBackLog(requestId string, img image.Image, result []byte) {
 	if helper.Settings.Customer["FACE_SAVE_IMAGE"] == "1" {
 		output_dir := fmt.Sprintf("%s/%s", 
 			helper.Settings.Customer["FACE_SAVE_IMAGE_PATH"], 
 			time.Now().Format("20060102"))
 		err := os.Mkdir(output_dir, 0755) // 建日志目录， 日期 做子目录
 		if err == nil || os.IsExist(err) { // 不处理错误
-			_ = ioutil.WriteFile(fmt.Sprintf("%s/%s.jpg", output_dir, requestId), image, 0644)
+			_ = imaging.Save(img, fmt.Sprintf("%s/%s.jpg", output_dir, requestId))
 			_ = ioutil.WriteFile(fmt.Sprintf("%s/%s.txt", output_dir, requestId), result, 0644)
 		} else {
 			log.Println("ERROR when saving log: ", err.Error())

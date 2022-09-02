@@ -66,7 +66,7 @@ func (x *FaceCheck) Infer(requestId string, reqData *map[string]interface{}) (*m
 
 	if feat==nil {  // 未检测到人脸
 		// 保存请求图片和结果
-		saveBackLog(requestId, image, []byte(fmt.Sprintf("%v", box)))
+		saveBackLog(requestId, normFace, []byte(fmt.Sprintf("%v", box)))
 
 		return &map[string]interface{}{"has_face": false}, nil
 	}
@@ -78,7 +78,7 @@ func (x *FaceCheck) Infer(requestId string, reqData *map[string]interface{}) (*m
 	}
 
 	// 保存请求图片和结果
-	saveBackLog(requestId, image, []byte(fmt.Sprintf("%v %v %v", box, isReal, realScore)))
+	saveBackLog(requestId, normFace, []byte(fmt.Sprintf("%v %v %v", box, isReal, realScore)))
 
 	return &map[string]interface{}{
 		"has_face":   true,
