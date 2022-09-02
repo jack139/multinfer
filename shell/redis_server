@@ -1,0 +1,43 @@
+#!/bin/sh
+
+
+REDIS_PATH="/app/redis-5.0.8"
+LOG_PATH="/tmp"
+
+
+start() {
+	$REDIS_PATH"/redis-server" $REDIS_PATH"/redis.conf"
+    	return 0 
+}
+
+stop() {
+	kill -9 `pgrep -f "redis-server"`
+	return 0
+}
+
+status() {
+	ps -ef|grep redis 
+    	return 0
+}
+
+
+case "$1" in
+    start)
+	start
+	RETVAL=$?
+	;;
+    stop)
+	stop
+	RETVAL=$?
+	;;
+    status)
+	status
+	RETVAL=$?
+	;;
+    *)
+	echo $"Usage: redis_server {start|stop|status}"
+	RETVAL=2
+	;;
+esac
+
+exit $RETVAL

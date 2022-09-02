@@ -1,0 +1,52 @@
+#!/bin/sh
+
+
+DB_PATH="/app/mongodb_data/db/"
+LOG_PATH="/app/mongodb_data/mongodb.log"
+
+
+start() {
+	mongod --fork --dbpath $DB_PATH --logpath $LOG_PATH --auth --bind_ip 127.0.0.1 --storageEngine wiredTiger
+	#mongod --fork --dbpath $DB_PATH --logpath $LOG_PATH --bind_ip 127.0.0.1 --storageEngine wiredTiger
+
+    	return 0 
+}
+
+stop() {
+	mongod --shutdown --dbpath $DB_PATH
+    	return 0
+}
+
+status() {
+	ps -ef|grep mongo
+    	return 0
+}
+
+repair() {
+	mongod --repair --dbpath=$DB_PATH
+}
+
+case "$1" in
+    start)
+	start
+	RETVAL=$?
+	;;
+    stop)
+	stop
+	RETVAL=$?
+	;;
+    status)
+	status
+	RETVAL=$?
+	;;
+    repair)
+	repair
+	RETVAL=$?
+	;;
+    *)
+	echo $"Usage: mongo_server {start|stop|status|repair}"
+	RETVAL=2
+	;;
+esac
+
+exit $RETVAL
