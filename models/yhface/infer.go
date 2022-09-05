@@ -28,6 +28,7 @@ var (
 	initOK = bool(false)
 )
 
+
 /* 初始化模型 */
 func initModel() error {
 	var err error

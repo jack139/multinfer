@@ -88,6 +88,12 @@ func (x *FaceFeatures) Infer(requestId string, reqData *map[string]interface{}) 
 		return &map[string]interface{}{"code":9008}, fmt.Errorf("DB connection problem.")
 	}
 
+	// normFace 转换 为 字节流
+	cropByte, err := image2bytes(normFace)
+	if err != nil {
+		return &map[string]interface{}{"code":9006}, err
+	}
+
 	// 更新人脸信息
 	database := facelib.Client.Database("face_db")
 	collFace := database.Collection("faces")
@@ -101,6 +107,7 @@ func (x *FaceFeatures) Infer(requestId string, reqData *map[string]interface{}) 
 					"None": feat,
 				},
 			},
+			"image": cropByte,
 		},
 	}
 

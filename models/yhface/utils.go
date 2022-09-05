@@ -7,6 +7,7 @@ import (
 	"log"
 	"math"
 	"image"
+	"bytes"
 	"io/ioutil"
 	"github.com/disintegration/imaging"
 	"github.com/jack139/go-infer/helper"
@@ -62,4 +63,17 @@ func norm(a []float32) ([]float32, error) {
 	}
 
 	return a, nil
+}
+
+
+// image 转换为 bytes
+func image2bytes(img image.Image) ([]byte, error) {
+	// 转换为 []byte
+	buf := new(bytes.Buffer)
+	err := imaging.Encode(buf, img, imaging.JPEG)
+	if err!=nil {
+		return nil, err
+	}
+
+	return buf.Bytes(), nil
 }
