@@ -50,7 +50,7 @@ if __name__ == '__main__':
     host = 'http://%s:5000'%hostname
 
     body = {
-        'version'  : '1',
+        #'version'  : '1',
         #'signType' : 'SHA256', 
         'signType' : 'SM2',
         'encType'  : 'plain',
