@@ -1,7 +1,7 @@
 #!/bin/bash
 
-LOG_PATH="/var/log/nginx/"
-LOG_PATH_B="/var/log/nginx/backup/"
+LOG_PATH="/opt/ai/logs/"
+LOG_PATH_B="/opt/ai/logs/backup/"
 
 LOG_FILES=`ls $LOG_PATH*.log`
 

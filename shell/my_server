@@ -1,48 +1,27 @@
 #!/bin/sh
 
-APP_DIR="/usr/share/nginx/html/cardnum"
-FACE_APP_DIR="/usr/share/nginx/html/yhfacelib"
-#QA_DIR="/usr/share/nginx/html/qa_demo"
-#NER_DIR="/usr/share/nginx/html/ner_test"
-#ANTIGEN_DIR="/usr/share/nginx/html/antigen"
-#GO_ANTIGEN_DIR="/app/antigen"
-
+APP_DIR="/opt/ai/app/cardnum"
+FACE_APP_DIR="/opt/ai/app/yhfacelib"
 GO_MULTINFER_DIR="/opt/ai/app/multinfer"
 MULTINFER_DEMO_DIR="/opt/ai/app/multinfer/bin/demo"
 
-LOG_PATH="/var/log/nginx"
+LOG_PATH="/opt/ai/logs"
 
 start_web() {
         uwsgi  -s /opt/ai/tmp/uwsgi_card.sock -C -M -p 2 -t 60 --limit-as 1024 -R 1000 --uid nobody --gid nobody \
                -d $LOG_PATH"/uwsgi_card.log" --pidfile /opt/ai/tmp/uwsgi_card.pid --pythonpath $APP_DIR
         uwsgi  -s /opt/ai/tmp/uwsgi_face.sock -C -M -p 2 -t 60 --limit-as 1024 -R 1000 --uid nobody --gid nobody \
                -d $LOG_PATH"/uwsgi_face.log" --pidfile /opt/ai/tmp/uwsgi_face.pid --pythonpath $FACE_APP_DIR
-        #uwsgi  -s /opt/ai/tmp/uwsgi_qa.sock -C -M -p 2 -t 15 --limit-as 1024 -R 1000 --uid nobody --gid nobody \
-        #       -d $LOG_PATH"/uwsgi_qa.log" --pidfile /opt/ai/tmp/uwsgi_qa.pid --pythonpath $QA_DIR
-        #uwsgi  -s /opt/ai/tmp/uwsgi_ner.sock -C -M -p 2 -t 15 --limit-as 1024 -R 1000 --uid nobody --gid nobody \
-        #       -d $LOG_PATH"/uwsgi_ner.log" --pidfile /opt/ai/tmp/uwsgi_ner.pid --pythonpath $NER_DIR
-        #uwsgi  -s /opt/ai/tmp/uwsgi_antigen.sock -C -M -p 2 -t 60 --limit-as 1024 -R 1000 --uid nobody --gid nobody \
-        #       -d $LOG_PATH"/uwsgi_antigen.log" --pidfile /opt/ai/tmp/uwsgi_antigen.pid --pythonpath $ANTIGEN_DIR
 
         uwsgi  -s /opt/ai/tmp/uwsgi_demo.sock -C -M -p 2 -t 60 --limit-as 1024 -R 1000 --uid nobody --gid nobody \
                -d $LOG_PATH"/uwsgi_demo.log" --pidfile /opt/ai/tmp/uwsgi_demo.pid --pythonpath $MULTINFER_DEMO_DIR
 
-        nginx -c /etc/nginx/nginx.conf
+        nginx -c /opt/ai/nginx/nginx.conf
         return 0
 }
 
 start_back() {
         nohup python3 $APP_DIR"/daemon.pyc" $APP_DIR $LOG_PATH >> $LOG_PATH"/daemon.log"  &
-        #nohup python3 $FACE_APP_DIR"/daemon.pyc" $FACE_APP_DIR $LOG_PATH >> $LOG_PATH"/face_daemon.log"  &
-        #nohup $FACE_APP_DIR"/gosearch" server DEFAULT --threshold "-0.27" --face 100 --gonum 4 >> \
-        #      $LOG_PATH"/face_gosearch.log"  &
-
-        #nohup python3 $QA_DIR"/daemon.pyc" $QA_DIR $LOG_PATH >> $LOG_PATH"/qa_daemon.log"  &
-        #nohup python3 $NER_DIR"/daemon.pyc" $NER_DIR $LOG_PATH >> $LOG_PATH"/ner_daemon.log"  &
-        #nohup python3 $ANTIGEN_DIR"/daemon.pyc" $ANTIGEN_DIR $LOG_PATH >> $LOG_PATH"/antigen_daemon.log"  &
-
-        #LD_LIBRARY_PATH=/usr/local/lib nohup $GO_ANTIGEN_DIR"/bin/antigen-go" server 0 --yaml $GO_ANTIGEN_DIR"/conf/settings.yaml" >> $LOG_PATH"/goantigen_server_0.log" &
-        #LD_LIBRARY_PATH=/usr/local/lib nohup $GO_ANTIGEN_DIR"/bin/antigen-go" http --yaml $GO_ANTIGEN_DIR"/conf/settings.yaml" >> $LOG_PATH"/goantigen_http.log" &
 
         LD_LIBRARY_PATH=/usr/local/lib64:/usr/local/lib nohup $GO_MULTINFER_DIR"/bin/multinfer" server 0 --yaml $GO_MULTINFER_DIR"/config/settings.yaml" >> $LOG_PATH"/multinfer_server_0.log" 2>&1 &
         LD_LIBRARY_PATH=/usr/local/lib64:/usr/local/lib nohup $GO_MULTINFER_DIR"/bin/multinfer" http --yaml $GO_MULTINFER_DIR"/config/settings.yaml" >> $LOG_PATH"/multinfer_http.log" 2>&1 &
@@ -51,18 +30,16 @@ start_back() {
 }
 
 stop_web() {
-        nginx -s quit
+        nginx -s quit -c /opt/ai/nginx/nginx.conf
         kill -9 `pgrep -f "uwsgi"`
         sleep 2
-        kill -9 `pgrep -f "nginx -c /etc/nginx/nginx.conf"`
+        kill -9 `pgrep -f "nginx -c /opt/ai/nginx/nginx.conf"`
         return 0
 }
 
 stop_back() {
         kill -9 `pgrep -f "daemon.py"`
         kill -9 `pgrep -f "dispatcher.py"`
-        #kill -9 `pgrep -f "gosearch"`
-        #kill -9 `pgrep -f "antigen-go"`
         kill -9 `pgrep -f "multinfer"`
         return 0
 }
