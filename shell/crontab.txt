@@ -1,5 +1,4 @@
 LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib:/usr/local/lib64
 
-0 3 * * * /usr/share/nginx/html/log_cut.sh > /tmp/log_cut.log
-30 3 * * * /root/my_server restart > /tmp/restart_back.log 2>&1
-
+0 3 * * * /usr/share/nginx/html/log_cut.sh > /opt/ai/tmp/log_cut.log
+03 3 * * * /opt/ai/my_server restart > /opt/ai/tmp/restart_back.log 2>&1

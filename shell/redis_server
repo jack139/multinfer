@@ -1,8 +1,8 @@
 #!/bin/sh
 
 
-REDIS_PATH="/app/redis-5.0.8"
-LOG_PATH="/tmp"
+REDIS_PATH="/opt/ai/app/redis-5.0.8"
+LOG_PATH="/opt/ai/tmp"
 
 
 start() {
@@ -11,7 +11,7 @@ start() {
 }
 
 stop() {
-	kill -9 `pgrep -f "redis-server"`
+	kill -9 `pgrep -f "redis-server 127.0.0.1:7480"`
 	return 0
 }
 

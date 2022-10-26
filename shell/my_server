@@ -7,27 +7,27 @@ FACE_APP_DIR="/usr/share/nginx/html/yhfacelib"
 #ANTIGEN_DIR="/usr/share/nginx/html/antigen"
 #GO_ANTIGEN_DIR="/app/antigen"
 
-GO_MULTINFER_DIR="/app/multinfer"
-MULTINFER_DEMO_DIR="/app/multinfer/bin/demo"
+GO_MULTINFER_DIR="/opt/ai/app/multinfer"
+MULTINFER_DEMO_DIR="/opt/ai/app/multinfer/bin/demo"
 
 LOG_PATH="/var/log/nginx"
 
 start_web() {
-        uwsgi  -s /tmp/uwsgi_card.sock -C -M -p 2 -t 60 --limit-as 1024 -R 1000 --uid nobody --gid nobody \
-               -d $LOG_PATH"/uwsgi_card.log" --pidfile /tmp/uwsgi_card.pid --pythonpath $APP_DIR
-        uwsgi  -s /tmp/uwsgi_face.sock -C -M -p 2 -t 60 --limit-as 1024 -R 1000 --uid nobody --gid nobody \
-               -d $LOG_PATH"/uwsgi_face.log" --pidfile /tmp/uwsgi_face.pid --pythonpath $FACE_APP_DIR
-        #uwsgi  -s /tmp/uwsgi_qa.sock -C -M -p 2 -t 15 --limit-as 1024 -R 1000 --uid nobody --gid nobody \
-        #       -d $LOG_PATH"/uwsgi_qa.log" --pidfile /tmp/uwsgi_qa.pid --pythonpath $QA_DIR
-        #uwsgi  -s /tmp/uwsgi_ner.sock -C -M -p 2 -t 15 --limit-as 1024 -R 1000 --uid nobody --gid nobody \
-        #       -d $LOG_PATH"/uwsgi_ner.log" --pidfile /tmp/uwsgi_ner.pid --pythonpath $NER_DIR
-        #uwsgi  -s /tmp/uwsgi_antigen.sock -C -M -p 2 -t 60 --limit-as 1024 -R 1000 --uid nobody --gid nobody \
-        #       -d $LOG_PATH"/uwsgi_antigen.log" --pidfile /tmp/uwsgi_antigen.pid --pythonpath $ANTIGEN_DIR
+        uwsgi  -s /opt/ai/tmp/uwsgi_card.sock -C -M -p 2 -t 60 --limit-as 1024 -R 1000 --uid nobody --gid nobody \
+               -d $LOG_PATH"/uwsgi_card.log" --pidfile /opt/ai/tmp/uwsgi_card.pid --pythonpath $APP_DIR
+        uwsgi  -s /opt/ai/tmp/uwsgi_face.sock -C -M -p 2 -t 60 --limit-as 1024 -R 1000 --uid nobody --gid nobody \
+               -d $LOG_PATH"/uwsgi_face.log" --pidfile /opt/ai/tmp/uwsgi_face.pid --pythonpath $FACE_APP_DIR
+        #uwsgi  -s /opt/ai/tmp/uwsgi_qa.sock -C -M -p 2 -t 15 --limit-as 1024 -R 1000 --uid nobody --gid nobody \
+        #       -d $LOG_PATH"/uwsgi_qa.log" --pidfile /opt/ai/tmp/uwsgi_qa.pid --pythonpath $QA_DIR
+        #uwsgi  -s /opt/ai/tmp/uwsgi_ner.sock -C -M -p 2 -t 15 --limit-as 1024 -R 1000 --uid nobody --gid nobody \
+        #       -d $LOG_PATH"/uwsgi_ner.log" --pidfile /opt/ai/tmp/uwsgi_ner.pid --pythonpath $NER_DIR
+        #uwsgi  -s /opt/ai/tmp/uwsgi_antigen.sock -C -M -p 2 -t 60 --limit-as 1024 -R 1000 --uid nobody --gid nobody \
+        #       -d $LOG_PATH"/uwsgi_antigen.log" --pidfile /opt/ai/tmp/uwsgi_antigen.pid --pythonpath $ANTIGEN_DIR
 
-        uwsgi  -s /tmp/uwsgi_demo.sock -C -M -p 2 -t 60 --limit-as 1024 -R 1000 --uid nobody --gid nobody \
-               -d $LOG_PATH"/uwsgi_demo.log" --pidfile /tmp/uwsgi_demo.pid --pythonpath $MULTINFER_DEMO_DIR
+        uwsgi  -s /opt/ai/tmp/uwsgi_demo.sock -C -M -p 2 -t 60 --limit-as 1024 -R 1000 --uid nobody --gid nobody \
+               -d $LOG_PATH"/uwsgi_demo.log" --pidfile /opt/ai/tmp/uwsgi_demo.pid --pythonpath $MULTINFER_DEMO_DIR
 
-        nginx
+        nginx -c /etc/nginx/nginx.conf
         return 0
 }
 
@@ -53,8 +53,8 @@ start_back() {
 stop_web() {
         nginx -s quit
         kill -9 `pgrep -f "uwsgi"`
-        sleep 1
-        kill -9 `pgrep -f "nginx"`
+        sleep 2
+        kill -9 `pgrep -f "nginx -c /etc/nginx/nginx.conf"`
         return 0
 }
 

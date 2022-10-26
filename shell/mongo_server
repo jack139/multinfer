@@ -1,8 +1,8 @@
 #!/bin/sh
 
 
-DB_PATH="/app/mongodb_data/db/"
-LOG_PATH="/app/mongodb_data/mongodb.log"
+DB_PATH="/opt/ai/app/mongodb_data/db/"
+LOG_PATH="/opt/ai/app/mongodb_data/mongodb.log"
 
 
 start() {
