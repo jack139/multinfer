@@ -18,6 +18,10 @@ func (x *FaceMemory) ApiPath() string {
 	return "__noapi__/memory"
 }
 
+func (x *FaceMemory) CustomQueue() string {
+	return ""
+}
+
 func (x *FaceMemory) ApiEntry(reqData *map[string]interface{}) (*map[string]interface{}, error) {
 	log.Println("Api_FaceMemory")
 

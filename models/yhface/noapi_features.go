@@ -27,6 +27,10 @@ func (x *FaceFeatures) ApiPath() string {
 	return "__noapi__/features"
 }
 
+func (x *FaceFeatures) CustomQueue() string {
+	return ""
+}
+
 func (x *FaceFeatures) ApiEntry(reqData *map[string]interface{}) (*map[string]interface{}, error) {
 	log.Println("Api_FaceFeatures")
 

@@ -20,6 +20,10 @@ func (x *NER) ApiPath() string {
 	return "/ner/ner"
 }
 
+func (x *NER) CustomQueue() string {
+	return ""
+}
+
 func (x *NER) ApiEntry(reqData *map[string]interface{}) (*map[string]interface{}, error) {
 	log.Println("Api_NER")
 

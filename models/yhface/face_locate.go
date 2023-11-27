@@ -20,6 +20,10 @@ func (x *FaceLocate) ApiPath() string {
 	return "/face2/locate"
 }
 
+func (x *FaceLocate) CustomQueue() string {
+	return ""
+}
+
 func (x *FaceLocate) ApiEntry(reqData *map[string]interface{}) (*map[string]interface{}, error) {
 	log.Println("Api_FaceLocate")
 

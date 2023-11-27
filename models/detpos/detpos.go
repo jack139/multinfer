@@ -23,6 +23,10 @@ func (x *DetPos) ApiPath() string {
 	return "/antigen/check"
 }
 
+func (x *DetPos) CustomQueue() string {
+	return ""
+}
+
 func (x *DetPos) ApiEntry(reqData *map[string]interface{}) (*map[string]interface{}, error) {
 	log.Println("Api_DetPos")
 

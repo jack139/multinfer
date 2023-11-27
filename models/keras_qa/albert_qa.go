@@ -18,6 +18,10 @@ func (x *AlbertQA) ApiPath() string {
 	return "/api/albert_qa"
 }
 
+func (x *AlbertQA) CustomQueue() string {
+	return ""
+}
+
 func (x *AlbertQA) ApiEntry(reqData *map[string]interface{}) (*map[string]interface{}, error) {
 	log.Println("Api_BertQA")
 

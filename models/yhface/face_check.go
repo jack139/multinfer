@@ -22,6 +22,10 @@ func (x *FaceCheck) ApiPath() string {
 	return "/face2/check"
 }
 
+func (x *FaceCheck) CustomQueue() string {
+	return ""
+}
+
 func (x *FaceCheck) ApiEntry(reqData *map[string]interface{}) (*map[string]interface{}, error) {
 	log.Println("Api_FaceCheck")
 
