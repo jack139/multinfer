@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>语音命令识别 Demo</title>
+</head>
+<body>
+    <h2>接口演示</h2>
+
+    <br/>
+
+    <div style="text-align:left;">
+
+    <h3>识别文本命令</h3>
+    <form method="post" enctype="multipart/form-data">
+        <input type="hidden" name="cate" value="text2order">
+        <div><input type="text" name="text" value="我想挂个内科的号">
+        <input type="submit" value="提交"></div>
+    </form>
+
+    <br/><br/>
+
+    <h3>识别语音命令</h3>
+    <form method="post" enctype="multipart/form-data">
+        <input type="hidden" name="cate" value="wav2order">
+        <div><input type="file" name="file">
+        <input type="submit" value="提交"></div>
+    </form>
+
+    </div>
+</body>
+
+<p>测试语音下载：<a href="/static/test_wav.zip">test_wav.zip</a></p>
+
+</html>

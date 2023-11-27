@@ -59,7 +59,7 @@ Customer: { # 以下 key-value 为用户自定义使用
     "NerPackModelPath" : "export/outputs/ner_pack/saved-model",
     "NerPackVocabPath" : "../../nlp/nlp_model/chinese_bert_L-12_H-768_A-12/vocab.txt",
 
-    "Load_YHFace" : "1",
+    "Load_YHFace" : "0",
     "ArcfaceModelPath" : "../../cv/face_model/arcface/models/buffalo_l", # buffalo_l 的路径
     "Fas2ModelPath" : "../../cv/face_model/fas_silent_onnx", # fas2 模型 的路径
     "FACE_MAX_IMAGE_SIZE" : "3145728", # 图片文件最大 3MB
@@ -73,4 +73,8 @@ Customer: { # 以下 key-value 为用户自定义使用
     "FACE_mongo_uri" : "mongodb://127.0.0.1:27017/",
     "FACE_mongo_user" : "ipcam",
     "FACE_mongo_pwd" : "ipcam",
+
+    "Load_Talk2UI_pack" : "1",
+    "BERT_QUEUE" : "talk2ui-bert-synchronous-asynchronous-queue", # bert识别 的python dispatcher, py3
+    "ASR_QUEUE" : "talk2ui-asr-synchronous-asynchronous-queue", # ASR 的python dispatcher, py3.9
 }

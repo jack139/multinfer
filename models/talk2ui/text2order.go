@@ -3,6 +3,8 @@ package talk2ui
 import (
 	"fmt"
 	"log"
+
+	"github.com/jack139/go-infer/helper"
 )
 
 
@@ -11,15 +13,15 @@ import (
 type Text2Order struct{}
 
 func (x *Text2Order) Init() error {
-	return initModel()
+	return nil
 }
 
 func (x *Text2Order) ApiPath() string {
-	return "/tail2ui/text2order"
+	return "/talk2ui/text2order"
 }
 
 func (x *Text2Order) CustomQueue() string {
-	return ""
+	return helper.Settings.Customer["BERT_QUEUE"]
 }
 
 func (x *Text2Order) ApiEntry(reqData *map[string]interface{}) (*map[string]interface{}, error) {

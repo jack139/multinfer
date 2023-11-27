@@ -5,13 +5,15 @@ from flask import Flask, Blueprint, render_template, request
 import urllib3, json, base64, time, hashlib
 from datetime import datetime
 from utils import helper, sm2
-from config.settings import MAX_IMAGE_SIZE, DEMO_ANTIGEN, DEMO_NER_PACK, DEMO_KERAS_QA
+from config.settings import MAX_IMAGE_SIZE, DEMO_ANTIGEN, DEMO_NER_PACK, DEMO_KERAS_QA, \
+        DEMO_TEXT2ORDER, DEMO_WAV2ORDER
 
 
-ALLOWED_EXTENSIONS = set(['png', 'jpg', 'jpeg'])
-def allowed_file(filename):
+ALLOWED_IMG_EXTENSIONS = set(['png', 'jpg', 'jpeg'])
+ALLOWED_WAV_EXTENSIONS = set(['wav', 'mp3'])
+def allowed_file(filename, allowed_extensions):
     return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+           filename.rsplit('.', 1)[1].lower() in allowed_extensions
 
 
 # 接口演示 antigen
@@ -26,7 +28,7 @@ def demo_get():
 @demo_antigen.route("/demo/antigen", methods=["POST"])
 def demo_post():
     file = request.files['file']
-    if file and allowed_file(file.filename):
+    if file and allowed_file(file.filename, ALLOWED_IMG_EXTENSIONS):
         #file.save(os.path.join(os.getcwd(), file.filename))
         image_data = file.stream.read()
         if len(image_data)>MAX_IMAGE_SIZE:
@@ -77,6 +79,41 @@ def demo_post():
         timespan=timespan, params=params, api_url=api_url)
 
 
+# 接口演示 talk2ui
+
+demo_antigen = Blueprint('demo_talk2ui', __name__)
+
+@demo_antigen.route("/demo/talk2ui", methods=["GET"])
+def demo_get():
+    return render_template('demo_talk2ui.html')
+
+@demo_antigen.route("/demo/talk2ui", methods=["POST"])
+def demo_post():
+    cate = request.form['cate']
+
+    if cate=="wav2order":
+        file = request.files['file']
+        if file and allowed_file(file.filename, ALLOWED_WAV_EXTENSIONS):
+            #file.save(os.path.join(os.getcwd(), file.filename))
+            wav_data = file.stream.read()
+            if len(wav_data)>MAX_IMAGE_SIZE:
+                return "wav file size exceeds 3MB"
+            body_data = { 'wav_data' : base64.b64encode(wav_data).decode('utf-8') }
+            api_url, params, status, rdata, timespan = call_api(cate, body_data)
+            return render_template('result.html', 
+                result=rdata, status=status, 
+                timespan=timespan, params=params, api_url=api_url)
+        else:
+            return "not allowed wav file"
+    else:
+        text = request.form['text']
+        body_data = { 'text' : text }
+        api_url, params, status, rdata, timespan = call_api(cate, body_data)
+        return render_template('result.html', 
+            result=rdata, status=status, 
+            timespan=timespan, params=params, api_url=api_url)
+
+
 # 调用接口
 def call_api(cate, body_data):
     hostname = '127.0.0.1'
@@ -118,6 +155,10 @@ def call_api(cate, body_data):
         url = f'http://{hostname}:{DEMO_NER_PACK[0]}{DEMO_NER_PACK[1]}'
     elif cate=='keras_qa':
         url = f'http://{hostname}:{DEMO_KERAS_QA[0]}{DEMO_KERAS_QA[1]}'
+    elif cate=='text2order':
+        url = f'http://{hostname}:{DEMO_TEXT2ORDER[0]}{DEMO_TEXT2ORDER[1]}'
+    elif cate=='wav2order':
+        url = f'http://{hostname}:{DEMO_WAV2ORDER[0]}{DEMO_WAV2ORDER[1]}'
     else:
         return "", "", 500, "", ""
 

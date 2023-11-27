@@ -15,6 +15,7 @@ import (
 	"multinfer/models/keras_qa"
 	"multinfer/models/ner_pack"
 	"multinfer/models/yhface"
+	"multinfer/models/talk2ui"
 )
 
 
@@ -62,6 +63,11 @@ func preRun(cmd *cobra.Command, args []string) error {
 		types.ModelList = append(types.ModelList, &yhface.FaceSearch{})
 		types.ModelList = append(types.ModelList, &yhface.FaceFeatures{})
 		types.ModelList = append(types.ModelList, &yhface.FaceMemory{})
+	}
+	if helper.Settings.Customer["Load_Talk2UI_pack"] == "1" {
+		types.ModelList = append(types.ModelList, &talk2ui.Text2Order{})
+		types.ModelList = append(types.ModelList, &talk2ui.Wav2Text{})
+		types.ModelList = append(types.ModelList, &talk2ui.Wav2Order{})
 	}
 
 	return nil
