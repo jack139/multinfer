@@ -73,4 +73,10 @@ Customer: { # 以下 key-value 为用户自定义使用
     "FACE_mongo_uri" : "mongodb://127.0.0.1:27017/",
     "FACE_mongo_user" : "ipcam",
     "FACE_mongo_pwd" : "ipcam",
+
+    "Load_Talk2UI_pack" : "1",
+    "BERT_QUEUE" : "talk2ui-bert-synchronous-asynchronous-queue", # bert识别 的python dispatcher, py3
+    "ASR_QUEUE" : "talk2ui-asr-synchronous-asynchronous-queue", # ASR 的python dispatcher, py3.9
+    "WAV_MAX_IMAGE_SIZE" : "3145728", # 图片文件最大 3MB
+
 }

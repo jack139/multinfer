@@ -3,6 +3,7 @@ package talk2ui
 import (
 	"fmt"
 	"log"
+	"strconv"
 
 	"github.com/jack139/go-infer/helper"
 )
@@ -31,6 +32,12 @@ func (x *Wav2Text) ApiEntry(reqData *map[string]interface{}) (*map[string]interf
 	wavData, ok := (*reqData)["wav_data"].(string)
 	if !ok {
 		return &map[string]interface{}{"code":9101}, fmt.Errorf("need wav_data")
+	}
+
+	// 检查数据大小
+	maxSize, _ := strconv.Atoi(helper.Settings.Customer["WAV_MAX_IMAGE_SIZE"])
+	if len(wavData) > maxSize {
+		return &map[string]interface{}{"code":9002}, fmt.Errorf("语音数据太大")
 	}
 
 	// 构建请求参数

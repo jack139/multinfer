@@ -4,6 +4,10 @@ APP_DIR="/opt/ai/app/cardnum"
 FACE_APP_DIR="/opt/ai/app/yhfacelib"
 GO_MULTINFER_DIR="/opt/ai/app/multinfer"
 MULTINFER_DEMO_DIR="/opt/ai/app/multinfer/bin/demo"
+CHAIN_DEMO_DIR="/opt/ai/app/ganymede/demo"
+LLAMA_DEMO_DIR="/opt/ai/app/llama/demo"
+LLAMA_DIR="/opt/ai/app/llama"
+TALK2UI_DIR="/opt/ai/app/talk2ui/api3"
 
 LOG_PATH="/opt/ai/logs"
 
@@ -16,15 +20,24 @@ start_web() {
         uwsgi  -s /opt/ai/tmp/uwsgi_demo.sock -C -M -p 2 -t 60 --limit-as 1024 -R 1000 --uid nobody --gid nobody \
                -d $LOG_PATH"/uwsgi_demo.log" --pidfile /opt/ai/tmp/uwsgi_demo.pid --pythonpath $MULTINFER_DEMO_DIR
 
+        uwsgi  -s /opt/ai/tmp/uwsgi_chain.sock -C -M -p 2 -t 60 --limit-as 1024 -R 1000 --uid nobody --gid nobody \
+               -d $LOG_PATH"/uwsgi_chain.log" --pidfile /opt/ai/tmp/uwsgi_chain.pid --pythonpath $CHAIN_DEMO_DIR
+
+        uwsgi  -s /opt/ai/tmp/uwsgi_llama.sock -C -M -p 2 -t 90 --limit-as 2048 -R 1000 --uid nobody --gid nobody \
+               -d $LOG_PATH"/uwsgi_llama.log" --pidfile /opt/ai/tmp/uwsgi_llama.pid --pythonpath $LLAMA_DEMO_DIR
+
         nginx -c /opt/ai/nginx/nginx.conf
         return 0
 }
 
 start_back() {
-        nohup python3 $APP_DIR"/daemon.pyc" $APP_DIR $LOG_PATH >> $LOG_PATH"/daemon.log"  &
+        nohup python3 $APP_DIR"/daemon.pyc" $APP_DIR $LOG_PATH >> $LOG_PATH"/daemon.log" &
 
         LD_LIBRARY_PATH=/usr/local/lib64:/usr/local/lib nohup $GO_MULTINFER_DIR"/bin/multinfer" server 0 --yaml $GO_MULTINFER_DIR"/config/settings.yaml" >> $LOG_PATH"/multinfer_server_0.log" 2>&1 &
         LD_LIBRARY_PATH=/usr/local/lib64:/usr/local/lib nohup $GO_MULTINFER_DIR"/bin/multinfer" http --yaml $GO_MULTINFER_DIR"/config/settings.yaml" >> $LOG_PATH"/multinfer_http.log" 2>&1 &
+        #nohup $LLAMA_DIR"/server" -m $LLAMA_DIR"/zh-models/7B/ggml-model-q4_0.bin" -c 512 --port 3026 >> $LOG_PATH"/llama_cpp.log" 2>&1 &
+
+        nohup python3 $TALK2UI_DIR"/daemon.pyc" $TALK2UI_DIR $LOG_PATH >> $LOG_PATH"/daemon_talk2ui.log" &
 
         return 0 
 }
@@ -40,7 +53,10 @@ stop_web() {
 stop_back() {
         kill -9 `pgrep -f "daemon.py"`
         kill -9 `pgrep -f "dispatcher.py"`
+        kill -9 `pgrep -f "dispatcher_bert.py"`
+        kill -9 `pgrep -f "dispatcher_asr.py"`
         kill -9 `pgrep -f "multinfer"`
+        kill -9 `pgrep -f "zh-models"`
         return 0
 }
 
