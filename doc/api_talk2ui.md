@@ -142,12 +142,10 @@ SM2加签结果（每次不同）：
     "appId": "66A095861BAE55F8735199DBC45D3E8E",
     "code": 0,
     "data": {
-        "data": {
-            "result": {
-                "object": "体检",
-                "order": "Check",
-                "text": "我想查下体检报告"
-            }
+        "result": {
+            "object": "体检",
+            "order": "Check",
+            "text": "我想查下体检报告"
         },
         "msg": "success",
         "requestId": "20231127205205120059ba735757e1e3a6b4113e74277e"
@@ -206,12 +204,10 @@ SM2加签结果（每次不同）：
     "appId": "66A095861BAE55F8735199DBC45D3E8E",
     "code": 0,
     "data": {
-        "data": {
-            "result": {
-                "object": "内科",
-                "order": "Department",
-                "text": "我想预约内科门诊"
-            }
+        "result": {
+            "object": "内科",
+            "order": "Department",
+            "text": "我想预约内科门诊"
         },
         "msg": "success",
         "requestId": "20231127205531dc8aad3bbfb25d3c5a1d32f982f671f9"
