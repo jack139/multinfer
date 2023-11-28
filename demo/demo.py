@@ -81,13 +81,13 @@ def demo_post():
 
 # 接口演示 talk2ui
 
-demo_antigen = Blueprint('demo_talk2ui', __name__)
+demo_talk2ui = Blueprint('demo_talk2ui', __name__)
 
-@demo_antigen.route("/demo/talk2ui", methods=["GET"])
+@demo_talk2ui.route("/demo/talk2ui", methods=["GET"])
 def demo_get():
     return render_template('demo_talk2ui.html')
 
-@demo_antigen.route("/demo/talk2ui", methods=["POST"])
+@demo_talk2ui.route("/demo/talk2ui", methods=["POST"])
 def demo_post():
     cate = request.form['cate']
 

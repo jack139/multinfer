@@ -2,7 +2,7 @@
 
 from flask import Flask
 
-from demo import demo_antigen, demo_ner, demo_qa
+from demo import demo_antigen, demo_ner, demo_qa, demo_talk2ui
 from config.settings import BIND_ADDR, BIND_PORT, DEBUG_MODE
 
 app = Flask(__name__)
@@ -15,6 +15,7 @@ def hello_world():
 app.register_blueprint(demo_antigen)
 app.register_blueprint(demo_ner)
 app.register_blueprint(demo_qa)
+app.register_blueprint(demo_talk2ui)
 
 
 if __name__ == '__main__':
