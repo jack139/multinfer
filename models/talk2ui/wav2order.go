@@ -108,7 +108,7 @@ func (x *Wav2Order) ApiEntry(reqData *map[string]interface{}) (*map[string]inter
 					(*respData)["msg"].(string))
 			}
 
-			result := ((*respData)["data"].(map[string]interface{}))["result"].(map[string]interface{})
+			result := (*respData)["result"].(map[string]interface{})
 			reqDataMap["text"] = result["text"].(string)
 
 		}
