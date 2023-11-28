@@ -6,7 +6,7 @@ import urllib3, json, base64, time, hashlib
 from datetime import datetime
 from utils import helper, sm2
 from config.settings import MAX_IMAGE_SIZE, DEMO_ANTIGEN, DEMO_NER_PACK, DEMO_KERAS_QA, \
-        DEMO_TEXT2ORDER, DEMO_WAV2ORDER
+        DEMO_TEXT2ORDER, DEMO_WAV2ORDER, DEMO_WAV2TEXT
 
 
 ALLOWED_IMG_EXTENSIONS = set(['png', 'jpg', 'jpeg'])
@@ -91,7 +91,7 @@ def demo_get():
 def demo_post():
     cate = request.form['cate']
 
-    if cate=="wav2order":
+    if cate=="wav2order" or cate=="wav2text":
         file = request.files['file']
         if file and allowed_file(file.filename, ALLOWED_WAV_EXTENSIONS):
             #file.save(os.path.join(os.getcwd(), file.filename))
@@ -159,6 +159,8 @@ def call_api(cate, body_data):
         url = f'http://{hostname}:{DEMO_TEXT2ORDER[0]}{DEMO_TEXT2ORDER[1]}'
     elif cate=='wav2order':
         url = f'http://{hostname}:{DEMO_WAV2ORDER[0]}{DEMO_WAV2ORDER[1]}'
+    elif cate=='wav2text':
+        url = f'http://{hostname}:{DEMO_WAV2TEXT[0]}{DEMO_WAV2TEXT[1]}'
     else:
         return "", "", 500, "", ""
 
