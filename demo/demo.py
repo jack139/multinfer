@@ -177,7 +177,7 @@ def call_api(cate, body_data):
     # 截短一下 image 字段显示内容
     if cate=='antigen':
         body['data']['image'] = body['data']['image'][:20]+' ... ' + body['data']['image'][-20:]
-    elif cate=='wav2order':
+    elif cate=='wav2order' or cate=='wav2text':
         body['data']['wav_data'] = body['data']['wav_data'][:20]+' ... ' + body['data']['wav_data'][-20:]
 
     body2 = json.dumps(body, ensure_ascii=False, indent=4)
