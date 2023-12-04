@@ -20,8 +20,10 @@ def request(hostname, body, url):
 
     if body['signType'] == 'SHA256':
         signature_str =  base64.b64encode(hashlib.sha256(sign_str.encode('utf-8')).hexdigest().encode('utf-8')).decode('utf-8')
-    else: # SM2
+    elif body['signType'] == 'SM2':
         signature_str = sm2.SM2withSM3_sign_base64(sign_str)
+    else: # 
+        signature_str = ""
 
     body['signData'] = signature_str
 
@@ -51,8 +53,9 @@ if __name__ == '__main__':
 
     body = {
         #'version'  : '1',
-        #'signType' : 'SHA256', 
-        'signType' : 'SM2',
+        'signType' : 'SHA256', 
+        #'signType' : 'SM2',
+        #'signType' : 'plain', 
         'encType'  : 'plain',
         'data'     : {},
     }
@@ -97,6 +100,9 @@ if __name__ == '__main__':
         body['data']['image'] = base64.b64encode(img_data).decode('utf-8')
         #body['data']['user_id'] = 'obama'
         #body['data']['mobile_tail'] = '14665'
+    if cate=="text2order":
+        url = host+'/talk2ui/text2order'
+        body['data']['text'] = "我想挂个内科的号"
     else: # detpos
         url = host+'/antigen/check'
         with open(filepath, 'rb') as f:
