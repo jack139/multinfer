@@ -4,11 +4,13 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/jack139/go-infer/types"
+
 	"multinfer/models/yhface/gosearch"
 )
 
 /*  定义模型相关参数和方法  */
-type FaceMemory struct{}
+type FaceMemory struct{ types.Base }
 
 func (x *FaceMemory) Init() error {
 	return initModel()
@@ -16,10 +18,6 @@ func (x *FaceMemory) Init() error {
 
 func (x *FaceMemory) ApiPath() string {
 	return "__noapi__/memory"
-}
-
-func (x *FaceMemory) CustomQueue() string {
-	return ""
 }
 
 func (x *FaceMemory) ApiEntry(reqData *map[string]interface{}) (*map[string]interface{}, error) {

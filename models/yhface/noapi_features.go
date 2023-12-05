@@ -11,13 +11,14 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"github.com/jack139/go-infer/helper"
+	"github.com/jack139/go-infer/types"
 
 	"multinfer/models/yhface/gosearch"
 	"multinfer/models/yhface/gosearch/facelib"
 )
 
 /*  定义模型相关参数和方法  */
-type FaceFeatures struct{}
+type FaceFeatures struct{ types.Base }
 
 func (x *FaceFeatures) Init() error {
 	return initModel()
@@ -25,10 +26,6 @@ func (x *FaceFeatures) Init() error {
 
 func (x *FaceFeatures) ApiPath() string {
 	return "__noapi__/features"
-}
-
-func (x *FaceFeatures) CustomQueue() string {
-	return ""
 }
 
 func (x *FaceFeatures) ApiEntry(reqData *map[string]interface{}) (*map[string]interface{}, error) {

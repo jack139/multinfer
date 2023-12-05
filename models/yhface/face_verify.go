@@ -7,11 +7,13 @@ import (
 	"encoding/base64"
 
 	"github.com/jack139/go-infer/helper"
+	"github.com/jack139/go-infer/types"
+
 	"multinfer/models/yhface/gosearch"
 )
 
 /*  定义模型相关参数和方法  */
-type FaceVerify struct{}
+type FaceVerify struct{ types.Base }
 
 func (x *FaceVerify) Init() error {
 	return initModel()
@@ -19,10 +21,6 @@ func (x *FaceVerify) Init() error {
 
 func (x *FaceVerify) ApiPath() string {
 	return "/face2/verify"
-}
-
-func (x *FaceVerify) CustomQueue() string {
-	return ""
 }
 
 func (x *FaceVerify) ApiEntry(reqData *map[string]interface{}) (*map[string]interface{}, error) {

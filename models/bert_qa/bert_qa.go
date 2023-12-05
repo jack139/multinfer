@@ -3,12 +3,14 @@ package bert_qa
 import (
 	"fmt"
 	"log"
+
+	"github.com/jack139/go-infer/types"
 )
 
 
 
 /*  定义模型相关参数和方法  */
-type BertQA struct{}
+type BertQA struct{ types.Base }
 
 func (x *BertQA) Init() error {
 	return initModel()
@@ -16,10 +18,6 @@ func (x *BertQA) Init() error {
 
 func (x *BertQA) ApiPath() string {
 	return "/api/bert_qa"
-}
-
-func (x *BertQA) CustomQueue() string {
-	return ""
 }
 
 func (x *BertQA) ApiEntry(reqData *map[string]interface{}) (*map[string]interface{}, error) {

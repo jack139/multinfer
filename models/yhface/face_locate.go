@@ -7,10 +7,11 @@ import (
 	"encoding/base64"
 
 	"github.com/jack139/go-infer/helper"
+	"github.com/jack139/go-infer/types"
 )
 
 /*  定义模型相关参数和方法  */
-type FaceLocate struct{}
+type FaceLocate struct{ types.Base }
 
 func (x *FaceLocate) Init() error {
 	return initModel()
@@ -18,10 +19,6 @@ func (x *FaceLocate) Init() error {
 
 func (x *FaceLocate) ApiPath() string {
 	return "/face2/locate"
-}
-
-func (x *FaceLocate) CustomQueue() string {
-	return ""
 }
 
 func (x *FaceLocate) ApiEntry(reqData *map[string]interface{}) (*map[string]interface{}, error) {

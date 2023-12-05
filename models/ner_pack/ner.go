@@ -4,12 +4,14 @@ import (
 	"fmt"
 	"log"
 	"sort"
+
+	"github.com/jack139/go-infer/types"
 )
 
 
 
 /*  定义模型相关参数和方法  */
-type NER struct{}
+type NER struct{ types.Base }
 
 
 func (x *NER) Init() error {
@@ -18,10 +20,6 @@ func (x *NER) Init() error {
 
 func (x *NER) ApiPath() string {
 	return "/ner/ner"
-}
-
-func (x *NER) CustomQueue() string {
-	return ""
 }
 
 func (x *NER) ApiEntry(reqData *map[string]interface{}) (*map[string]interface{}, error) {

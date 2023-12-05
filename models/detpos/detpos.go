@@ -10,10 +10,11 @@ import (
 	"io/ioutil"
 
 	"github.com/jack139/go-infer/helper"
+	"github.com/jack139/go-infer/types"
 )
 
 /*  定义模型相关参数和方法  */
-type DetPos struct{}
+type DetPos struct{ types.Base }
 
 func (x *DetPos) Init() error {
 	return initModel()
@@ -21,10 +22,6 @@ func (x *DetPos) Init() error {
 
 func (x *DetPos) ApiPath() string {
 	return "/antigen/check"
-}
-
-func (x *DetPos) CustomQueue() string {
-	return ""
 }
 
 func (x *DetPos) ApiEntry(reqData *map[string]interface{}) (*map[string]interface{}, error) {

@@ -8,10 +8,11 @@ import (
 	"encoding/base64"
 
 	"github.com/jack139/go-infer/helper"
+	"github.com/jack139/go-infer/types"
 )
 
 /*  定义模型相关参数和方法  */
-type FaceSearch struct{}
+type FaceSearch struct{ types.Base }
 
 func (x *FaceSearch) Init() error {
 	return initModel()
@@ -19,10 +20,6 @@ func (x *FaceSearch) Init() error {
 
 func (x *FaceSearch) ApiPath() string {
 	return "/face2/search"
-}
-
-func (x *FaceSearch) CustomQueue() string {
-	return ""
 }
 
 func (x *FaceSearch) ApiEntry(reqData *map[string]interface{}) (*map[string]interface{}, error) {

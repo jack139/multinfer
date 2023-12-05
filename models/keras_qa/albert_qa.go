@@ -3,12 +3,14 @@ package keras_qa
 import (
 	"fmt"
 	"log"
+
+	"github.com/jack139/go-infer/types"
 )
 
 
 
 /*  定义模型相关参数和方法  */
-type AlbertQA struct{}
+type AlbertQA struct{ types.Base }
 
 func (x *AlbertQA) Init() error {
 	return initModel()
@@ -16,10 +18,6 @@ func (x *AlbertQA) Init() error {
 
 func (x *AlbertQA) ApiPath() string {
 	return "/api/albert_qa"
-}
-
-func (x *AlbertQA) CustomQueue() string {
-	return ""
 }
 
 func (x *AlbertQA) ApiEntry(reqData *map[string]interface{}) (*map[string]interface{}, error) {
