@@ -11,7 +11,10 @@ API:
         "3EA25569454745D01219080B779F021F" : "41DF0E6AE27B5282C07EF5124642A352",
     }
     RequestTimestampDiff: 300 # api请求timestamp与服务器时间差异(秒)，大于差异绝对值将被拒绝
-    AllowSignPlain: true # 是否允许 plain 签名（不验签）
+    AllowSignPlain: [ # 是否允许 plain 签名（不验签）
+        "66A095861BAE55F8735199DBC45D3E8E",
+    ]
+
 
 # 推理服务队列的参数
 Server:
