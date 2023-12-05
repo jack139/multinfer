@@ -8,7 +8,7 @@ require (
 	github.com/disintegration/imaging v1.6.2
 	github.com/ivansuteja96/go-onnxruntime v0.0.0-20220724043122-8d5640cbb46b
 	github.com/jack139/arcface-go v0.0.4
-	github.com/jack139/go-infer v0.1.15-0.20231205031411-c9afbd2446aa
+	github.com/jack139/go-infer v0.1.15-0.20231205065257-9088f1ee8e43
 	github.com/spf13/cobra v1.5.0
 	github.com/tensorflow/tensorflow v1.15.4
 	go.mongodb.org/mongo-driver v1.10.1
