@@ -16,7 +16,7 @@ def request(hostname, body, url):
     param_str = helper.gen_param_str(body)
     sign_str = '%s&key=%s' % (param_str, '43E554621FF7BF4756F8C1ADF17F209C')
 
-    #print(sign_str)
+    print(sign_str)
 
     if body['signType'] == 'SHA256':
         signature_str =  base64.b64encode(hashlib.sha256(sign_str.encode('utf-8')).hexdigest().encode('utf-8')).decode('utf-8')
@@ -58,6 +58,8 @@ if __name__ == '__main__':
         #'signType' : 'plain', 
         'encType'  : 'plain',
         'data'     : {},
+        'others1' : { "test" : [1,2,3] }, # 干扰项测试
+        'others2' : 122,
     }
 
     if cate=="qa":
