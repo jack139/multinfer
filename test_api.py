@@ -16,7 +16,7 @@ def request(hostname, body, url):
     param_str = helper.gen_param_str(body)
     sign_str = '%s&key=%s' % (param_str, '43E554621FF7BF4756F8C1ADF17F209C')
 
-    print(sign_str)
+    #print(sign_str)
 
     if body['signType'] == 'SHA256':
         signature_str =  base64.b64encode(hashlib.sha256(sign_str.encode('utf-8')).hexdigest().encode('utf-8')).decode('utf-8')
@@ -105,6 +105,11 @@ if __name__ == '__main__':
     if cate=="text2order":
         url = host+'/talk2ui/text2order'
         body['data']['text'] = "我想挂个内科的号"
+    if cate=="ocr_text":
+        url = host+'/ocr2/ocr_text'
+        with open(filepath, 'rb') as f:
+            img_data = f.read()
+        body['data']['image'] = base64.b64encode(img_data).decode('utf-8')
     else: # detpos
         url = host+'/antigen/check'
         with open(filepath, 'rb') as f:

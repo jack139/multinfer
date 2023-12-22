@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"strconv"
+	"encoding/base64"
 
 	"github.com/jack139/go-infer/helper"
 )
@@ -34,9 +35,15 @@ func (x *OCRText) ApiEntry(reqData *map[string]interface{}) (*map[string]interfa
 		return &map[string]interface{}{"code":9101}, fmt.Errorf("need image")
 	}
 
+	// 解码base64
+	image, err  := base64.StdEncoding.DecodeString(imageBase64)
+	if err!=nil {
+		return &map[string]interface{}{"code":9901}, err
+	}
+
 	// 检查图片大小
 	maxSize, _ := strconv.Atoi(helper.Settings.Customer["OCR_MAX_IMAGE_SIZE"])
-	if len(imageBase64) > maxSize {
+	if len(image) > maxSize {
 		return &map[string]interface{}{"code":9002}, fmt.Errorf("图片数据太大")
 	}
 
