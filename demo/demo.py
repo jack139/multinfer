@@ -6,7 +6,8 @@ import urllib3, json, base64, time, hashlib
 from datetime import datetime
 from utils import helper, sm2
 from config.settings import MAX_IMAGE_SIZE, DEMO_ANTIGEN, DEMO_NER_PACK, DEMO_KERAS_QA, \
-        DEMO_TEXT2ORDER, DEMO_WAV2ORDER, DEMO_WAV2TEXT
+        DEMO_TEXT2ORDER, DEMO_WAV2ORDER, DEMO_WAV2TEXT, \
+        DEMO_OCR_BANKCARD, DEMO_OCR_IDCARD, DEMO_OCR_CARDNO, DEMO_OCR_TEXT
 
 
 ALLOWED_IMG_EXTENSIONS = set(['png', 'jpg', 'jpeg'])
@@ -35,6 +36,33 @@ def demo_post():
             return "image file size exceeds 3MB"
         body_data = { 'image' : base64.b64encode(image_data).decode('utf-8') }
         api_url, params, status, rdata, timespan = call_api("antigen", body_data)
+        return render_template('result.html', 
+            result=rdata, status=status, 
+            timespan=timespan, params=params, api_url=api_url)
+    else:
+        return "not allowed image"
+
+
+# 接口演示 OCR
+
+demo_ocr = Blueprint('demo_ocr', __name__)
+
+
+@demo_ocr.route("/demo/ocr", methods=["GET"])
+def demo_get():
+    return render_template('demo_ocr.html')
+
+@demo_ocr.route("/demo/ocr", methods=["POST"])
+def demo_post():
+    cate = request.form['cate']
+
+    file = request.files['file']
+    if file and allowed_file(file.filename, ALLOWED_IMG_EXTENSIONS):
+        image_data = file.stream.read()
+        if len(image_data)>MAX_IMAGE_SIZE:
+            return "image file size exceeds 3MB"
+        body_data = { 'image' : base64.b64encode(image_data).decode('utf-8') }
+        api_url, params, status, rdata, timespan = call_api(cate, body_data)
         return render_template('result.html', 
             result=rdata, status=status, 
             timespan=timespan, params=params, api_url=api_url)
@@ -94,7 +122,6 @@ def demo_post():
     if cate=="wav2order" or cate=="wav2text":
         file = request.files['file']
         if file and allowed_file(file.filename, ALLOWED_WAV_EXTENSIONS):
-            #file.save(os.path.join(os.getcwd(), file.filename))
             wav_data = file.stream.read()
             if len(wav_data)>MAX_IMAGE_SIZE:
                 return "wav file size exceeds 3MB"
@@ -161,6 +188,14 @@ def call_api(cate, body_data):
         url = f'http://{hostname}:{DEMO_WAV2ORDER[0]}{DEMO_WAV2ORDER[1]}'
     elif cate=='wav2text':
         url = f'http://{hostname}:{DEMO_WAV2TEXT[0]}{DEMO_WAV2TEXT[1]}'
+    elif cate=='ocr_id_card':
+        url = f'http://{hostname}:{DEMO_OCR_IDCARD[0]}{DEMO_OCR_IDCARD[1]}'
+    elif cate=='ocr_bank_card':
+        url = f'http://{hostname}:{DEMO_OCR_BANKCARD[0]}{DEMO_OCR_BANKCARD[1]}'
+    elif cate=='ocr_card_no':
+        url = f'http://{hostname}:{DEMO_OCR_CARDNO[0]}{DEMO_OCR_CARDNO[1]}'
+    elif cate=='ocr_text':
+        url = f'http://{hostname}:{DEMO_OCR_TEXT[0]}{DEMO_OCR_TEXT[1]}'
     else:
         return "", "", 500, "", ""
 
@@ -175,7 +210,7 @@ def call_api(cate, body_data):
         rdata = r.data
 
     # 截短一下 image 字段显示内容
-    if cate=='antigen':
+    if cate in ('antigen', 'ocr_bank_card', 'ocr_id_card', 'ocr_card_no', 'ocr_text'):
         body['data']['image'] = body['data']['image'][:20]+' ... ' + body['data']['image'][-20:]
     elif cate=='wav2order' or cate=='wav2text':
         body['data']['wav_data'] = body['data']['wav_data'][:20]+' ... ' + body['data']['wav_data'][-20:]

@@ -16,6 +16,7 @@ import (
 	"multinfer/models/ner_pack"
 	"multinfer/models/yhface"
 	"multinfer/models/talk2ui"
+	"multinfer/models/ocr"
 )
 
 
@@ -68,6 +69,13 @@ func preRun(cmd *cobra.Command, args []string) error {
 		types.ModelList = append(types.ModelList, &talk2ui.Text2Order{})
 		types.ModelList = append(types.ModelList, &talk2ui.Wav2Text{})
 		types.ModelList = append(types.ModelList, &talk2ui.Wav2Order{})
+	}
+
+	if helper.Settings.Customer["Load_OCR_pack"] == "1" {
+		types.ModelList = append(types.ModelList, &ocr.OCRBankCard{})
+		types.ModelList = append(types.ModelList, &ocr.OCRIdCard{})
+		types.ModelList = append(types.ModelList, &ocr.OCRCardNo{})
+		types.ModelList = append(types.ModelList, &ocr.OCRText{})
 	}
 
 	return nil

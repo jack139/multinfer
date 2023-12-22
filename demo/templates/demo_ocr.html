@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>OCR识别 Demo</title>
+</head>
+<body>
+    <h2>接口演示</h2>
+
+    <br/>
+
+    <div style="text-align:left;">
+
+    <h3>识别身份证</h3>
+    <form method="post" enctype="multipart/form-data">
+        <input type="hidden" name="cate" value="ocr_id_card">
+        <div><input type="file" name="file">
+        <input type="submit" value="提交"></div>
+    </form>
+
+    <br/><br/>
+
+    <h3>识别银行卡号</h3>
+    <form method="post" enctype="multipart/form-data">
+        <input type="hidden" name="cate" value="ocr_bank_card">
+        <div><input type="file" name="file">
+        <input type="submit" value="提交"></div>
+    </form>
+
+    <br/><br/>
+
+    <h3>识别就诊卡号</h3>
+    <form method="post" enctype="multipart/form-data">
+        <input type="hidden" name="cate" value="ocr_card_no">
+        <div><input type="file" name="file">
+        <input type="submit" value="提交"></div>
+    </form>
+
+    <br/><br/>
+
+    <h3>识别普通文本</h3>
+    <form method="post" enctype="multipart/form-data">
+        <input type="hidden" name="cate" value="ocr_text">
+        <div><input type="file" name="file">
+        <input type="submit" value="提交"></div>
+    </form>
+
+    <br/><br/>
+
+    </div>
+</body>
+
+
+</html>
